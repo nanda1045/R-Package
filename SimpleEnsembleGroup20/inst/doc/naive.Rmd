@@ -1,0 +1,131 @@
+---
+title: "Naive  variable importance score"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Naive  variable importance score}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  output: rmarkdown::html_vignette
+
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(SimpleEnsembleGroup20)
+```
+
+This function implements a generic bagging (bootstrap aggregation) procedure tailored for regression models. It aims to enhance model accuracy and stability by repeatedly sampling from the dataset with replacement, fitting a model on each sample using a user-defined function, and then averaging the results. The function not only averages the model coefficients but also computes the standard errors, t-values, p-values, and variable importance scores based on the frequency of variable selection across all samples.
+
+```{r}
+
+
+#' Perform Bagging for Regression Models
+#'
+#' This function implements a generic bagging procedure for regression models. It takes a dataset, repeatedly samples
+#' from it with replacement, fits a model on each sample, and then averages the results to improve model stability and
+#' accuracy. It computes averaged coefficients, standard errors, t-values, p-values, and variable importance scores.
+#'
+#' @param y Response vector with outcomes.
+#' @param X Predictor matrix or data frame.
+#' @param naive A function that fits a model and returns a list containing at least coefficients and fitted values.
+#' This function must accept two arguments: y (response) and X (predictors).
+#' @param R The number of bootstrap replicates to use in the bagging process.
+#'
+#' @return A list containing:
+#'   - coefficients` Averaged coefficients across all bootstrap samples.
+#'   - coef` Standard errors of the averaged coefficients.
+#'   - t_values t-values computed from averaged coefficients and their standard errors.
+#'   - p_values p-values associated with the t-values.
+#'   - predictions` Averaged predictions across all bootstrap samples.
+#'   - variable_importance`Importance scores for each predictor, averaged across all samples.
+#'
+#' @examples
+#' # Example usage with a linear model fitting function
+#' data(mtcars)
+#' naive <- function(y, X) {
+#'   model <- lm(y ~ X)
+#'   list(coefficients = coef(model), fitted_values = predict(model))
+#' }
+#' results <- bagging_perform(mtcars$mpg, mtcars[, -1], naive, R = 100)
+#' print(results)
+#'
+#' @export
+bagging_perform <- function(y, X, naive, R) {
+  n <- length(y)
+  coefficients_list <- list()
+  predictions_matrix <- matrix(NA, nrow = n, ncol = R)  # Matrix to store predictions for each bootstrap sample
+  variable_importance <- numeric(ncol(X))
+
+  for (i in 1:R) {
+    idx <- sample(1:n, replace = TRUE)
+    predictor_sample <- X[idx, , drop = FALSE]
+    response_sample <- y[idx]
+
+    model <- naive(response_sample, predictor_sample)
+    if (!is.null(model$coefficients) && length(model$fitted_values) == n) {
+      coefficients_list[[i]] <- as.vector(model$coefficients)
+      predictions_matrix[, i] <- model$fitted_values
+      variable_importance <- variable_importance + (model$coefficients != 0)
+    } else {
+      cat("Mismatch or NULL data in iteration:", i, "\nLength of fitted_values:", length(model$fitted_values), "Expected:", n, "\n")
+    }
+  }
+
+  # Calculate mean and standard deviation of coefficients
+  all_coefs <- do.call(cbind, coefficients_list)
+  mean_coefs <- rowMeans(all_coefs, na.rm = TRUE)  # Calculate row-wise mean
+  std_coefs <- apply(all_coefs, 1, sd, na.rm = TRUE)  # Standard deviation by row
+  coef <- std_coefs / sqrt(R)  # Approximate standard error
+
+  # Recompute t-values and p-values
+  t_values <- mean_coefs / coef
+  df <- n - ncol(X) - 1
+  p_values <- 2 * pt(-abs(t_values), df = df)
+
+  # Calculate average predictions
+  final_predictions <- rowMeans(predictions_matrix, na.rm = TRUE)
+
+  # Normalize variable importance
+  variable_importance <- variable_importance / R
+
+  return(list(coefficients = mean_coefs, coef = coef, t_values = t_values, p_values = p_values, predictions = final_predictions, variable_importance = variable_importance))
+}
+
+
+
+```
+
+Load Data: The mtcars dataset is loaded, containing several measurements (like mpg, cyl, disp) for various car models.
+Naive Model Function: A user-defined function naive is created that fits a linear model to the provided data. It must return at least the coefficients and the predictions, which are essential for the bagging process.
+Bagging Operation: The bagging_perform function is called with the mtcars dataset (excluding the response variable mpg), the naive function, and the number of bootstrap replicates set to 100. This setup is meant to test the robustness and effectiveness of the function in aggregating results from multiple samples to provide a stable estimate.
+Output Display: The results, including averaged coefficients, predictions, standard errors, t-values, p-values, and variable importance scores, are printed.
+Expected Outputs:
+Coefficients: Averaged coefficients of the predictors across all bootstrap samples.
+Standard Errors (coef): Calculated standard errors of the averaged coefficients.
+T-values: T-values derived from the averaged coefficients and their standard errors.
+P-values: Associated p-values for the t-values, providing insight into the statistical significance of the predictors.
+Predictions: Averaged predictions for the mpg variable across all samples.
+Variable Importance: Scores indicating how frequently each predictor was selected across the bootstrap samples, shedding light on the predictors' relevance.
+
+```{r}
+
+data(mtcars)
+
+naive <- function(response, predictors) {
+  model <- lm(response ~ ., data = data.frame(response, predictors))
+  list(coefficients = coef(model), fitted_values = predict(model))
+}
+
+results <- bagging_perform(mtcars$mpg, mtcars[, -1], naive, R = 100)
+print(results)
+
+```
+
+The test aims to apply the bagging_perform function with a naive implementation of linear regression fitting using the mtcars dataset. It assesses the function's ability to compute and average the model's coefficients, generate predictions, and calculate standard errors, t-values, p-values, and variable importance scores across 100 bootstrap samples.
+

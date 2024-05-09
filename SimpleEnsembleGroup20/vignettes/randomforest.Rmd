@@ -1,0 +1,96 @@
+---
+title: "Random Forest Model"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Random Forest Model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(SimpleEnsembleGroup20)
+```
+This function leverages the randomForest package to fit a random forest model suitable for either regression or classification tasks. Random forests are an ensemble learning method that operates by constructing a multitude of decision trees at training time and outputting the class that is the mode of the classes (classification) or mean prediction (regression) of the individual trees. The function supports numeric vectors for regression and factors for classification.
+
+
+```{r}
+library(randomForest)
+
+#' Fit a Random Forest Model for Binomial or Gaussian Distributions
+#'
+#' @param y The response variable, either a numeric vector for Gaussian regression or a factor vector for binomial classification.
+#' @param X The data frame of predictor variables.
+#' @param type A character string specifying the type of model: 'gaussian' for regression or 'binomial' for classification.
+#' @param num_trees The number of trees to grow in the random forest.
+#' @param mtry The number of variables to consider at each split. If NULL, the default value will be used.
+#' @return A list containing the random forest model object and the model predictions.
+randomforest <- function(y, X, type = 'gaussian', num_trees = 500, mtry = NULL) {
+  # Validate the input data
+  validate_data(y, X)
+
+  # Determine the appropriate random forest model type
+  if (type == 'gaussian') {
+    if (is.null(mtry)) {
+      mtry <- floor(sqrt(ncol(X)))
+    }
+    rf <- randomForest(x = X, y = y, ntree = num_trees, mtry = mtry, type = 'regression')
+    model_predictions <- predict(rf, newdata = X)
+  } else if (type == 'binomial') {
+    y <- factor(y)
+    if (is.null(mtry)) {
+      mtry <- floor(sqrt(ncol(X)))
+    }
+    rf <- randomForest(x = X, y = y, ntree = num_trees, mtry = mtry, type = 'classification')
+    model_predictions <- predict(rf, newdata = X, type = 'prob')[, 2]
+  } else {
+    stop("Invalid type. Must be either 'gaussian' or 'binomial'.")
+  }
+
+  return(list(model = rf, predictions = model_predictions))
+}
+
+#' Validate the input data for the random forest model
+#'
+#' @param y The response variable.
+#' @param X The data frame of predictor variables.
+#' @return NULL (invisible)
+validate_data <- function(y, X) {
+  if (length(y) != nrow(X)) {
+    stop("The number of observations in the target variable and predictor data must be the same.")
+  }
+
+  if (any(is.na(y)) || any(is.na(X))) {
+    stop("The input data must not contain any missing values.")
+  }
+}
+
+```
+Parameters:
+y: The response variable. For regression tasks, this should be a numeric vector. For classification tasks, it should be a factor vector.
+X: A data frame of predictor variables. Variables can be numeric or categorical but should be appropriately pre-processed.
+type: Specifies the type of model to fit. Acceptable values are 'gaussian' for regression and 'binomial' for classification.
+num_trees: The number of trees to grow in the forest. Default is 500.
+mtry: The number of variables to consider at each split. If NULL, a default value based on the square root of the number of predictors is used.
+
+
+Returns:
+A list containing:
+
+model: The fitted random forest model object. This object includes all model parameters and can be used for further analysis or prediction.
+predictions: Predictions made by the model on the training dataset. For classification, these will be class probabilities.
+
+
+```{r}
+# Example usage for Gaussian regression
+data(mtcars)
+result_rf_gaussian <- randomforest(mtcars$mpg, mtcars[, -1], type = 'gaussian')
+print(result_rf_gaussian)
+
+```

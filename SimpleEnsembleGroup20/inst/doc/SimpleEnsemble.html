@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Simple Ensemble Model</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Simple Ensemble Model</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SimpleEnsembleGroup20)</span></code></pre></div>
+<p>The ensemble_model_fitting function fits multiple predictive models
+to the same dataset and combines their predictions using a standardized
+method. It supports both regression and classification tasks, making it
+versatile for various analytical needs. Users can specify a list of
+models or use default model settings. The function integrates
+predictions from different models based on user-defined proportions or
+equal weighting if not specified. This ensemble approach can enhance
+predictive performance by leveraging the strengths of different modeling
+techniques and reducing model-specific biases or variances.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co">#&#39; @title Ensemble Model Fitting Using Standardized Prediction</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&#39; @description Fits multiple models specified by the model list to the same dataset and combines their predictions using a</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&#39; standardized prediction method. Supports regression (gaussian) and classification (binomial) types.</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&#39; @param X Data frame or matrix of predictors.</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&#39; @param y Vector of response variables.</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&#39; @param model_type Character specifying whether to fit models for &#39;gaussian&#39; (regression) or &#39;binomial&#39; (classification).</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&#39; @param model_list List of model fitting functions expressed as character strings.</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&#39; @param threshold Threshold for converting probabilities to class labels in case of &#39;binomial&#39; model type, default is 0.5.</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&#39; @return A list containing combined predictions and details for each fitted model including individual model predictions,</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&#39; as well as the accuracy/RMSE for regression and classification tasks.</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&#39; @export</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&#39; @examples</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&#39;   data(mtcars)</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&#39;   X &lt;- mtcars[, -which(names(mtcars) == &quot;mpg&quot;)]</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&#39;   y &lt;- mtcars$mpg  # For gaussian; use a binary response for &#39;binomial&#39;</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&#39;   model_list &lt;- c(&quot;fit_linear_model&quot;, &quot;fit_random_forest_model&quot;)</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&#39;   results &lt;- ensemble_model_fitting(X, y, model_type = &#39;gaussian&#39;, model_list = model_list)</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&#39;   print(results$combined_predictions)</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&#39;   # To view individual model details and predictions:</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&#39;   print(results$model_details)</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&#39;   print(results$individual_predictions)</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="fu">library</span>(caret)</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt; Warning: package &#39;caret&#39; was built under R version 4.3.3</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt; Loading required package: ggplot2</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt; Loading required package: lattice</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="fu">library</span>(xgboost)</span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt; Warning: package &#39;xgboost&#39; was built under R version 4.3.3</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="fu">library</span>(randomForest)</span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt; Warning: package &#39;randomForest&#39; was built under R version 4.3.3</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt; randomForest 4.7-1.1</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt; Type rfNews() to see new features/changes/bug fixes.</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt; Attaching package: &#39;randomForest&#39;</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt; The following object is masked from &#39;package:ggplot2&#39;:</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt;     margin</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="fu">library</span>(glmnet)</span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="co">#&gt; Warning: package &#39;glmnet&#39; was built under R version 4.3.3</span></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a><span class="co">#&gt; Loading required package: Matrix</span></span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="co">#&gt; Loaded glmnet 4.1-8</span></span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a>ensemble_model_fitting <span class="ot">&lt;-</span> <span class="cf">function</span>(X, y, model_type, <span class="at">folds =</span> <span class="dv">10</span>) {</span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a>  default_models <span class="ot">&lt;-</span> <span class="cf">if</span> (model_type <span class="sc">==</span> <span class="st">&#39;binomial&#39;</span>) {</span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a>      <span class="fu">c</span>(<span class="st">&quot;logistic&quot;</span>),</span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a>      <span class="fu">c</span>(<span class="dv">1</span>)</span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a>    )</span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a>      <span class="fu">c</span>(<span class="st">&quot;linear&quot;</span>, <span class="st">&quot;randomForest&quot;</span>, <span class="st">&quot;ridge&quot;</span>),</span>
+<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a>      <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">0.4</span>, <span class="fl">0.2</span>)</span>
+<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a>    )</span>
+<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a>  }</span>
+<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a></span>
+<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a>  default_choice <span class="ot">&lt;-</span> <span class="fu">readline</span>(<span class="at">prompt =</span> <span class="st">&quot;Do you want to run with default models? (yes/no): &quot;</span>)</span>
+<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a></span>
+<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">tolower</span>(default_choice) <span class="sc">==</span> <span class="st">&quot;yes&quot;</span>) {</span>
+<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a>    selected_models <span class="ot">&lt;-</span> default_models[[<span class="dv">1</span>]]</span>
+<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a>    proportions <span class="ot">&lt;-</span> default_models[[<span class="dv">2</span>]]</span>
+<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span>model_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&#39;gaussian&#39;</span>, <span class="st">&#39;binomial&#39;</span>)) {</span>
+<span id="cb2-62"><a href="#cb2-62" tabindex="-1"></a>      <span class="fu">stop</span>(<span class="st">&quot;Unsupported model type provided: &quot;</span>, model_type)</span>
+<span id="cb2-63"><a href="#cb2-63" tabindex="-1"></a>    }</span>
+<span id="cb2-64"><a href="#cb2-64" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="#cb2-65" tabindex="-1"></a>    <span class="co"># Define model choices based on the model type</span></span>
+<span id="cb2-66"><a href="#cb2-66" tabindex="-1"></a>    model_choices <span class="ot">&lt;-</span> <span class="cf">if</span> (model_type <span class="sc">==</span> <span class="st">&#39;binomial&#39;</span>) {</span>
+<span id="cb2-67"><a href="#cb2-67" tabindex="-1"></a>      <span class="fu">c</span>(<span class="st">&quot;logistic&quot;</span>)</span>
+<span id="cb2-68"><a href="#cb2-68" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb2-69"><a href="#cb2-69" tabindex="-1"></a>      <span class="fu">c</span>(<span class="st">&quot;linear&quot;</span>, <span class="st">&quot;randomForest&quot;</span>, <span class="st">&quot;ridge&quot;</span>, <span class="st">&quot;lasso&quot;</span>, <span class="st">&quot;elasticNet&quot;</span>)</span>
+<span id="cb2-70"><a href="#cb2-70" tabindex="-1"></a>    }</span>
+<span id="cb2-71"><a href="#cb2-71" tabindex="-1"></a></span>
+<span id="cb2-72"><a href="#cb2-72" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">&quot;Available models for&quot;</span>, model_type, <span class="st">&quot;:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-73"><a href="#cb2-73" tabindex="-1"></a>    <span class="fu">print</span>(model_choices)</span>
+<span id="cb2-74"><a href="#cb2-74" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="#cb2-75" tabindex="-1"></a>    <span class="co"># Get model selections from the user</span></span>
+<span id="cb2-76"><a href="#cb2-76" tabindex="-1"></a>    input <span class="ot">&lt;-</span> <span class="fu">readline</span>(<span class="at">prompt =</span> <span class="st">&quot;Enter model numbers (separated by commas): &quot;</span>)</span>
+<span id="cb2-77"><a href="#cb2-77" tabindex="-1"></a>    model_indices <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">strsplit</span>(input, <span class="st">&quot;,&quot;</span>)[[<span class="dv">1</span>]])</span>
+<span id="cb2-78"><a href="#cb2-78" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(model_indices) <span class="sc">==</span> <span class="dv">0</span> <span class="sc">||</span> <span class="fu">any</span>(<span class="fu">is.na</span>(model_indices))) {</span>
+<span id="cb2-79"><a href="#cb2-79" tabindex="-1"></a>      <span class="fu">cat</span>(<span class="st">&quot;No valid models selected, using default models.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-80"><a href="#cb2-80" tabindex="-1"></a>      model_indices <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">min</span>(<span class="dv">2</span>, <span class="fu">length</span>(model_choices))  <span class="co"># Default to first two models</span></span>
+<span id="cb2-81"><a href="#cb2-81" tabindex="-1"></a>    }</span>
+<span id="cb2-82"><a href="#cb2-82" tabindex="-1"></a>    selected_models <span class="ot">&lt;-</span> model_choices[model_indices]</span>
+<span id="cb2-83"><a href="#cb2-83" tabindex="-1"></a></span>
+<span id="cb2-84"><a href="#cb2-84" tabindex="-1"></a>    <span class="co"># Get proportions from the user</span></span>
+<span id="cb2-85"><a href="#cb2-85" tabindex="-1"></a>    proportions <span class="ot">&lt;-</span> <span class="fu">sapply</span>(selected_models, <span class="cf">function</span>(m) {</span>
+<span id="cb2-86"><a href="#cb2-86" tabindex="-1"></a>      <span class="fu">as.numeric</span>(<span class="fu">readline</span>(<span class="fu">paste</span>(<span class="st">&quot;Enter proportion for&quot;</span>, m, <span class="st">&quot;: &quot;</span>)))</span>
+<span id="cb2-87"><a href="#cb2-87" tabindex="-1"></a>    })</span>
+<span id="cb2-88"><a href="#cb2-88" tabindex="-1"></a></span>
+<span id="cb2-89"><a href="#cb2-89" tabindex="-1"></a>    <span class="co"># Normalize or set default proportions if input is invalid</span></span>
+<span id="cb2-90"><a href="#cb2-90" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(proportions) <span class="sc">!=</span> <span class="fu">length</span>(selected_models) <span class="sc">||</span> <span class="fu">any</span>(<span class="fu">is.na</span>(proportions)) <span class="sc">||</span> <span class="fu">sum</span>(proportions) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb2-91"><a href="#cb2-91" tabindex="-1"></a>      <span class="fu">cat</span>(<span class="st">&quot;Invalid proportions provided, using equal proportions.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-92"><a href="#cb2-92" tabindex="-1"></a>      proportions <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">1</span> <span class="sc">/</span> <span class="fu">length</span>(selected_models), <span class="fu">length</span>(selected_models))</span>
+<span id="cb2-93"><a href="#cb2-93" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb2-94"><a href="#cb2-94" tabindex="-1"></a>      proportions <span class="ot">&lt;-</span> proportions <span class="sc">/</span> <span class="fu">sum</span>(proportions)  <span class="co"># Normalize</span></span>
+<span id="cb2-95"><a href="#cb2-95" tabindex="-1"></a>    }</span>
+<span id="cb2-96"><a href="#cb2-96" tabindex="-1"></a>  }</span>
+<span id="cb2-97"><a href="#cb2-97" tabindex="-1"></a></span>
+<span id="cb2-98"><a href="#cb2-98" tabindex="-1"></a>  predictions_list <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb2-99"><a href="#cb2-99" tabindex="-1"></a>  model_details_list <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb2-100"><a href="#cb2-100" tabindex="-1"></a></span>
+<span id="cb2-101"><a href="#cb2-101" tabindex="-1"></a>  <span class="co"># Fit models and collect predictions</span></span>
+<span id="cb2-102"><a href="#cb2-102" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(selected_models)) {</span>
+<span id="cb2-103"><a href="#cb2-103" tabindex="-1"></a>    model_name <span class="ot">&lt;-</span> selected_models[i]</span>
+<span id="cb2-104"><a href="#cb2-104" tabindex="-1"></a>    proportion <span class="ot">&lt;-</span> proportions[i]</span>
+<span id="cb2-105"><a href="#cb2-105" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">&quot;Fitting model:&quot;</span>, model_name, <span class="st">&quot;with proportion&quot;</span>, proportion, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-106"><a href="#cb2-106" tabindex="-1"></a></span>
+<span id="cb2-107"><a href="#cb2-107" tabindex="-1"></a>    <span class="co"># Create a formula and fit the model</span></span>
+<span id="cb2-108"><a href="#cb2-108" tabindex="-1"></a>    formula <span class="ot">&lt;-</span> <span class="fu">as.formula</span>(<span class="fu">paste</span>(<span class="st">&quot;y ~ .&quot;</span>))</span>
+<span id="cb2-109"><a href="#cb2-109" tabindex="-1"></a>    data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">y =</span> y, X)</span>
+<span id="cb2-110"><a href="#cb2-110" tabindex="-1"></a>    <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">&quot;logistic&quot;</span>) {</span>
+<span id="cb2-111"><a href="#cb2-111" tabindex="-1"></a>      model_fit <span class="ot">&lt;-</span> <span class="fu">glm</span>(formula, <span class="at">data =</span> data, <span class="at">family =</span> <span class="fu">binomial</span>())</span>
+<span id="cb2-112"><a href="#cb2-112" tabindex="-1"></a>    } <span class="cf">else</span> <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">&quot;linear&quot;</span>) {</span>
+<span id="cb2-113"><a href="#cb2-113" tabindex="-1"></a>      model_fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(formula, <span class="at">data =</span> data)</span>
+<span id="cb2-114"><a href="#cb2-114" tabindex="-1"></a>    } <span class="cf">else</span> <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">&quot;randomForest&quot;</span>) {</span>
+<span id="cb2-115"><a href="#cb2-115" tabindex="-1"></a>      model_fit <span class="ot">&lt;-</span> <span class="fu">randomForest</span>(formula, <span class="at">data =</span> data)</span>
+<span id="cb2-116"><a href="#cb2-116" tabindex="-1"></a>    } <span class="cf">else</span> <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">&quot;ridge&quot;</span>) {</span>
+<span id="cb2-117"><a href="#cb2-117" tabindex="-1"></a>      model_fit <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(<span class="at">x =</span> <span class="fu">as.matrix</span>(X), <span class="at">y =</span> y, <span class="at">alpha =</span> <span class="dv">0</span>, <span class="at">nfolds =</span> folds, <span class="at">family =</span> <span class="fu">ifelse</span>(model_type <span class="sc">==</span> <span class="st">&quot;binomial&quot;</span>, <span class="st">&quot;binomial&quot;</span>, <span class="st">&quot;gaussian&quot;</span>))</span>
+<span id="cb2-118"><a href="#cb2-118" tabindex="-1"></a>    } <span class="cf">else</span> <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">&quot;lasso&quot;</span>) {</span>
+<span id="cb2-119"><a href="#cb2-119" tabindex="-1"></a>      model_fit <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(<span class="at">x =</span> <span class="fu">as.matrix</span>(X), <span class="at">y =</span> y, <span class="at">alpha =</span> <span class="dv">1</span>, <span class="at">nfolds =</span> folds, <span class="at">family =</span> <span class="fu">ifelse</span>(model_type <span class="sc">==</span> <span class="st">&quot;binomial&quot;</span>, <span class="st">&quot;binomial&quot;</span>, <span class="st">&quot;gaussian&quot;</span>))</span>
+<span id="cb2-120"><a href="#cb2-120" tabindex="-1"></a>    } <span class="cf">else</span> <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">&quot;elasticNet&quot;</span>) {</span>
+<span id="cb2-121"><a href="#cb2-121" tabindex="-1"></a>      model_fit <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(<span class="at">x =</span> <span class="fu">as.matrix</span>(X), <span class="at">y =</span> y, <span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">nfolds =</span> folds, <span class="at">family =</span> <span class="fu">ifelse</span>(model_type <span class="sc">==</span> <span class="st">&quot;binomial&quot;</span>, <span class="st">&quot;binomial&quot;</span>, <span class="st">&quot;gaussian&quot;</span>))</span>
+<span id="cb2-122"><a href="#cb2-122" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb2-123"><a href="#cb2-123" tabindex="-1"></a>      <span class="cf">next</span>  <span class="co"># Skip if model name is not recognized</span></span>
+<span id="cb2-124"><a href="#cb2-124" tabindex="-1"></a>    }</span>
+<span id="cb2-125"><a href="#cb2-125" tabindex="-1"></a></span>
+<span id="cb2-126"><a href="#cb2-126" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(model_fit)) {</span>
+<span id="cb2-127"><a href="#cb2-127" tabindex="-1"></a>      <span class="cf">if</span> (model_name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;logistic&quot;</span>) <span class="sc">&amp;&amp;</span> model_type <span class="sc">==</span> <span class="st">&quot;binomial&quot;</span>) {</span>
+<span id="cb2-128"><a href="#cb2-128" tabindex="-1"></a>        predictions <span class="ot">&lt;-</span> <span class="fu">predict</span>(model_fit, <span class="at">newx =</span> <span class="fu">as.matrix</span>(X), <span class="at">type =</span> <span class="st">&quot;response&quot;</span>)</span>
+<span id="cb2-129"><a href="#cb2-129" tabindex="-1"></a>      } <span class="cf">else</span> {</span>
+<span id="cb2-130"><a href="#cb2-130" tabindex="-1"></a>        predictions <span class="ot">&lt;-</span> <span class="fu">predict</span>(model_fit, <span class="at">newx =</span> <span class="fu">as.matrix</span>(X))</span>
+<span id="cb2-131"><a href="#cb2-131" tabindex="-1"></a>      }</span>
+<span id="cb2-132"><a href="#cb2-132" tabindex="-1"></a>      predictions_list[[<span class="fu">length</span>(predictions_list) <span class="sc">+</span> <span class="dv">1</span>]] <span class="ot">&lt;-</span> predictions <span class="sc">*</span> proportion</span>
+<span id="cb2-133"><a href="#cb2-133" tabindex="-1"></a>      model_details_list[[<span class="fu">length</span>(model_details_list) <span class="sc">+</span> <span class="dv">1</span>]] <span class="ot">&lt;-</span> model_fit</span>
+<span id="cb2-134"><a href="#cb2-134" tabindex="-1"></a>    }</span>
+<span id="cb2-135"><a href="#cb2-135" tabindex="-1"></a>  }</span>
+<span id="cb2-136"><a href="#cb2-136" tabindex="-1"></a></span>
+<span id="cb2-137"><a href="#cb2-137" tabindex="-1"></a>  <span class="co"># Combine predictions</span></span>
+<span id="cb2-138"><a href="#cb2-138" tabindex="-1"></a>  combined_predictions <span class="ot">&lt;-</span> <span class="fu">Reduce</span>(<span class="st">&quot;+&quot;</span>, predictions_list)</span>
+<span id="cb2-139"><a href="#cb2-139" tabindex="-1"></a></span>
+<span id="cb2-140"><a href="#cb2-140" tabindex="-1"></a>  <span class="co"># Output combined predictions and model details</span></span>
+<span id="cb2-141"><a href="#cb2-141" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Combined Predictions:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-142"><a href="#cb2-142" tabindex="-1"></a>  <span class="fu">print</span>(combined_predictions)</span>
+<span id="cb2-143"><a href="#cb2-143" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Model Details:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-144"><a href="#cb2-144" tabindex="-1"></a>  <span class="fu">print</span>(model_details_list)</span>
+<span id="cb2-145"><a href="#cb2-145" tabindex="-1"></a></span>
+<span id="cb2-146"><a href="#cb2-146" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(</span>
+<span id="cb2-147"><a href="#cb2-147" tabindex="-1"></a>    <span class="at">combined_predictions =</span> combined_predictions,</span>
+<span id="cb2-148"><a href="#cb2-148" tabindex="-1"></a>    <span class="at">individual_predictions =</span> predictions_list,</span>
+<span id="cb2-149"><a href="#cb2-149" tabindex="-1"></a>    <span class="at">model_details =</span> model_details_list</span>
+<span id="cb2-150"><a href="#cb2-150" tabindex="-1"></a>  ))</span>
+<span id="cb2-151"><a href="#cb2-151" tabindex="-1"></a>}</span></code></pre></div>
+<p>Test Case 1: Classification with the Iris Dataset Objective:
+Demonstrate the functionality of ensemble_model_fitting for a multiclass
+classification task using the iris dataset, which contains measurements
+of iris flowers and their species classifications.</p>
+<p>Dataset: The iris dataset.</p>
+<p>Features (X): Sepal length, sepal width, petal length, and petal
+width. Target (y): Species of the iris flower (setosa, versicolor,
+virginica).</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Test case 1: Using the iris dataset for classification</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">data</span>(iris)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>X <span class="ot">&lt;-</span> iris[, <span class="sc">-</span><span class="dv">5</span>]  <span class="co"># Features</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>y <span class="ot">&lt;-</span> iris<span class="sc">$</span>Species  <span class="co"># Target variable</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co"># Call the function for classification</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>results_classification <span class="ot">&lt;-</span> <span class="fu">ensemble_model_fitting</span>(X, y, <span class="at">model_type =</span> <span class="st">&#39;binomial&#39;</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; Do you want to run with default models? (yes/no): </span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; Available models for binomial :</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; [1] &quot;logistic&quot;</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; Enter model numbers (separated by commas): </span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; No valid models selected, using default models.</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; Enter proportion for logistic : </span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; Invalid proportions provided, using equal proportions.</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt; Fitting model: logistic with proportion 1</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; Warning: glm.fit: algorithm did not converge</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; Combined Predictions:</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt;            1            2            3            4            5            6 </span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; 2.220446e-16 2.220446e-16 2.220446e-16 1.875686e-12 2.220446e-16 2.220446e-16 </span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt;            7            8            9           10           11           12 </span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; 2.077262e-13 2.220446e-16 1.268389e-11 2.220446e-16 2.220446e-16 1.266230e-13 </span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt;           13           14           15           16           17           18 </span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt; 2.220446e-16 2.220446e-16 2.220446e-16 2.220446e-16 2.220446e-16 2.220446e-16 </span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt;           19           20           21           22           23           24 </span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt; 2.220446e-16 2.220446e-16 2.220446e-16 2.220446e-16 2.220446e-16 3.968396e-11 </span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="co">#&gt;           25           26           27           28           29           30 </span></span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="co">#&gt; 5.245006e-11 2.775502e-13 9.076879e-13 2.220446e-16 2.220446e-16 1.969335e-12 </span></span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="co">#&gt;           31           32           33           34           35           36 </span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="co">#&gt; 1.331002e-12 2.220446e-16 2.220446e-16 2.220446e-16 2.220446e-16 2.220446e-16 </span></span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="co">#&gt;           37           38           39           40           41           42 </span></span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="co">#&gt; 2.220446e-16 2.220446e-16 7.767584e-13 2.220446e-16 2.220446e-16 5.033679e-10 </span></span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co">#&gt;           43           44           45           46           47           48 </span></span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co">#&gt; 1.618733e-13 3.120309e-11 5.037930e-12 4.553236e-13 2.220446e-16 1.148666e-13 </span></span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt;           49           50           51           52           53           54 </span></span>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co">#&gt; 2.220446e-16 2.220446e-16 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a><span class="co">#&gt;           55           56           57           58           59           60 </span></span>
+<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-39"><a href="#cb3-39" tabindex="-1"></a><span class="co">#&gt;           61           62           63           64           65           66 </span></span>
+<span id="cb3-40"><a href="#cb3-40" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-41"><a href="#cb3-41" tabindex="-1"></a><span class="co">#&gt;           67           68           69           70           71           72 </span></span>
+<span id="cb3-42"><a href="#cb3-42" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-43"><a href="#cb3-43" tabindex="-1"></a><span class="co">#&gt;           73           74           75           76           77           78 </span></span>
+<span id="cb3-44"><a href="#cb3-44" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-45"><a href="#cb3-45" tabindex="-1"></a><span class="co">#&gt;           79           80           81           82           83           84 </span></span>
+<span id="cb3-46"><a href="#cb3-46" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-47"><a href="#cb3-47" tabindex="-1"></a><span class="co">#&gt;           85           86           87           88           89           90 </span></span>
+<span id="cb3-48"><a href="#cb3-48" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-49"><a href="#cb3-49" tabindex="-1"></a><span class="co">#&gt;           91           92           93           94           95           96 </span></span>
+<span id="cb3-50"><a href="#cb3-50" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-51"><a href="#cb3-51" tabindex="-1"></a><span class="co">#&gt;           97           98           99          100          101          102 </span></span>
+<span id="cb3-52"><a href="#cb3-52" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-53"><a href="#cb3-53" tabindex="-1"></a><span class="co">#&gt;          103          104          105          106          107          108 </span></span>
+<span id="cb3-54"><a href="#cb3-54" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-55"><a href="#cb3-55" tabindex="-1"></a><span class="co">#&gt;          109          110          111          112          113          114 </span></span>
+<span id="cb3-56"><a href="#cb3-56" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-57"><a href="#cb3-57" tabindex="-1"></a><span class="co">#&gt;          115          116          117          118          119          120 </span></span>
+<span id="cb3-58"><a href="#cb3-58" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-59"><a href="#cb3-59" tabindex="-1"></a><span class="co">#&gt;          121          122          123          124          125          126 </span></span>
+<span id="cb3-60"><a href="#cb3-60" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-61"><a href="#cb3-61" tabindex="-1"></a><span class="co">#&gt;          127          128          129          130          131          132 </span></span>
+<span id="cb3-62"><a href="#cb3-62" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-63"><a href="#cb3-63" tabindex="-1"></a><span class="co">#&gt;          133          134          135          136          137          138 </span></span>
+<span id="cb3-64"><a href="#cb3-64" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-65"><a href="#cb3-65" tabindex="-1"></a><span class="co">#&gt;          139          140          141          142          143          144 </span></span>
+<span id="cb3-66"><a href="#cb3-66" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-67"><a href="#cb3-67" tabindex="-1"></a><span class="co">#&gt;          145          146          147          148          149          150 </span></span>
+<span id="cb3-68"><a href="#cb3-68" tabindex="-1"></a><span class="co">#&gt; 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00 </span></span>
+<span id="cb3-69"><a href="#cb3-69" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-70"><a href="#cb3-70" tabindex="-1"></a><span class="co">#&gt; Model Details:</span></span>
+<span id="cb3-71"><a href="#cb3-71" tabindex="-1"></a><span class="co">#&gt; [[1]]</span></span>
+<span id="cb3-72"><a href="#cb3-72" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-73"><a href="#cb3-73" tabindex="-1"></a><span class="co">#&gt; Call:  glm(formula = formula, family = binomial(), data = data)</span></span>
+<span id="cb3-74"><a href="#cb3-74" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-75"><a href="#cb3-75" tabindex="-1"></a><span class="co">#&gt; Coefficients:</span></span>
+<span id="cb3-76"><a href="#cb3-76" tabindex="-1"></a><span class="co">#&gt;  (Intercept)  Sepal.Length   Sepal.Width  Petal.Length   Petal.Width  </span></span>
+<span id="cb3-77"><a href="#cb3-77" tabindex="-1"></a><span class="co">#&gt;       16.946       -11.759        -7.842        20.088        21.608  </span></span>
+<span id="cb3-78"><a href="#cb3-78" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-79"><a href="#cb3-79" tabindex="-1"></a><span class="co">#&gt; Degrees of Freedom: 149 Total (i.e. Null);  145 Residual</span></span>
+<span id="cb3-80"><a href="#cb3-80" tabindex="-1"></a><span class="co">#&gt; Null Deviance:       191 </span></span>
+<span id="cb3-81"><a href="#cb3-81" tabindex="-1"></a><span class="co">#&gt; Residual Deviance: 3.294e-09     AIC: 10</span></span></code></pre></div>
+<p>Expected Output: The output should include combined predictions that
+leverage multiple models (as specified by the user or defaults). Details
+of each model used and their individual predictions will also be
+available, providing insights into how each contributes to the final
+ensemble predictions.</p>
+<p>Test Case 2: Regression with the mtcars Dataset Objective: Test the
+ensemble_model_fitting function’s capability to handle a regression task
+using the mtcars dataset, which includes automotive attributes and their
+associated fuel efficiency.</p>
+<p>Dataset: The mtcars dataset.</p>
+<p>Features (X): All columns except mpg, which include technical
+specifications and performance metrics of the cars. Target (y): Miles
+per gallon (mpg), indicating the fuel efficiency.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Test case 2: Using the mtcars dataset for regression</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">data</span>(mtcars)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>X <span class="ot">&lt;-</span> mtcars[, <span class="sc">-</span><span class="fu">which</span>(<span class="fu">names</span>(mtcars) <span class="sc">==</span> <span class="st">&quot;mpg&quot;</span>)]  <span class="co"># Features</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>y <span class="ot">&lt;-</span> mtcars<span class="sc">$</span>mpg  <span class="co"># Target variable</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co"># Call the function for regression</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>results_regression <span class="ot">&lt;-</span> <span class="fu">ensemble_model_fitting</span>(X, y, <span class="at">model_type =</span> <span class="st">&#39;gaussian&#39;</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; Do you want to run with default models? (yes/no): </span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; Available models for gaussian :</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; [1] &quot;linear&quot;       &quot;randomForest&quot; &quot;ridge&quot;        &quot;lasso&quot;        &quot;elasticNet&quot;  </span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; Enter model numbers (separated by commas): </span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; No valid models selected, using default models.</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; Enter proportion for linear : </span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; Enter proportion for randomForest : </span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; Invalid proportions provided, using equal proportions.</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; Fitting model: linear with proportion 0.5 </span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; Fitting model: randomForest with proportion 0.5 </span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; Combined Predictions:</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt;           Mazda RX4       Mazda RX4 Wag          Datsun 710      Hornet 4 Drive </span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt;            21.67631            21.33796            26.04339            20.02160 </span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt;   Hornet Sportabout             Valiant          Duster 360           Merc 240D </span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt;            17.16253            20.28271            14.66422            22.75401 </span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt;            Merc 230            Merc 280           Merc 280C          Merc 450SE </span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt;            23.40557            18.82458            19.57195            15.20887 </span></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt;          Merc 450SL         Merc 450SLC  Cadillac Fleetwood Lincoln Continental </span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt;            15.78992            16.19666            12.69488            11.93473 </span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="co">#&gt;   Chrysler Imperial            Fiat 128         Honda Civic      Toyota Corolla </span></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="co">#&gt;            11.58583            27.69190            30.12462            29.38737 </span></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co">#&gt;       Toyota Corona    Dodge Challenger         AMC Javelin          Camaro Z28 </span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="co">#&gt;            23.60484            16.73434            17.81704            14.43142 </span></span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="co">#&gt;    Pontiac Firebird           Fiat X1-9       Porsche 914-2        Lotus Europa </span></span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="co">#&gt;            16.45552            29.43835            25.69889            26.49320 </span></span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co">#&gt;      Ford Pantera L        Ferrari Dino       Maserati Bora          Volvo 142E </span></span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a><span class="co">#&gt;            18.13591            19.94670            14.79555            23.93419 </span></span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a><span class="co">#&gt; Model Details:</span></span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a><span class="co">#&gt; [[1]]</span></span>
+<span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-39"><a href="#cb4-39" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb4-40"><a href="#cb4-40" tabindex="-1"></a><span class="co">#&gt; lm(formula = formula, data = data)</span></span>
+<span id="cb4-41"><a href="#cb4-41" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-42"><a href="#cb4-42" tabindex="-1"></a><span class="co">#&gt; Coefficients:</span></span>
+<span id="cb4-43"><a href="#cb4-43" tabindex="-1"></a><span class="co">#&gt; (Intercept)          cyl         disp           hp         drat           wt  </span></span>
+<span id="cb4-44"><a href="#cb4-44" tabindex="-1"></a><span class="co">#&gt;    12.30337     -0.11144      0.01334     -0.02148      0.78711     -3.71530  </span></span>
+<span id="cb4-45"><a href="#cb4-45" tabindex="-1"></a><span class="co">#&gt;        qsec           vs           am         gear         carb  </span></span>
+<span id="cb4-46"><a href="#cb4-46" tabindex="-1"></a><span class="co">#&gt;     0.82104      0.31776      2.52023      0.65541     -0.19942  </span></span>
+<span id="cb4-47"><a href="#cb4-47" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-48"><a href="#cb4-48" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-49"><a href="#cb4-49" tabindex="-1"></a><span class="co">#&gt; [[2]]</span></span>
+<span id="cb4-50"><a href="#cb4-50" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-51"><a href="#cb4-51" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb4-52"><a href="#cb4-52" tabindex="-1"></a><span class="co">#&gt;  randomForest(formula = formula, data = data) </span></span>
+<span id="cb4-53"><a href="#cb4-53" tabindex="-1"></a><span class="co">#&gt;                Type of random forest: regression</span></span>
+<span id="cb4-54"><a href="#cb4-54" tabindex="-1"></a><span class="co">#&gt;                      Number of trees: 500</span></span>
+<span id="cb4-55"><a href="#cb4-55" tabindex="-1"></a><span class="co">#&gt; No. of variables tried at each split: 3</span></span>
+<span id="cb4-56"><a href="#cb4-56" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-57"><a href="#cb4-57" tabindex="-1"></a><span class="co">#&gt;           Mean of squared residuals: 5.333458</span></span>
+<span id="cb4-58"><a href="#cb4-58" tabindex="-1"></a><span class="co">#&gt;                     % Var explained: 84.84</span></span></code></pre></div>
+<p>Expected Output: The results will include a combined prediction that
+uses the weighted average of predictions from several regression models.
+The function will provide details for each model, such as model
+coefficients and individual predictions, enabling a comprehensive
+analysis of how each model performs on the given dataset.</p>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

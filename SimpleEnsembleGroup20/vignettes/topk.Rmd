@@ -1,0 +1,111 @@
+---
+title: "Top K predictors"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Top K predictors}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(SimpleEnsembleGroup20)
+```
+This function utilizes Singular Value Decomposition (SVD) on a predictor matrix to identify and select the top K
+
+K most informative predictors. The selection is based on the magnitudes of the entries in the first right singular vector of the matrix  V
+
+
+V, which correspond to the predictors. This method is particularly useful in feature selection for high-dimensional data, helping to reduce dimensionality and enhance model interpretability
+
+
+```{r}
+#' @title Select the Top K Informative Predictors Using SVD
+#'
+#' @description This function performs Singular Value Decomposition (SVD) on the predictor matrix \( X \)
+#' and selects the top \( K \) most informative predictors based on the first right singular vector.
+#' It checks that \( X \) is either a matrix or a data frame and ensures \( K \) is less than or equal to
+#' the number of features in \( X \).
+#'
+#' @param predictor_matrix A matrix or data frame of predictors.
+#' @param top_k The number of top informative predictors to return.
+#' @return A list containing a data frame with the top \( K \) predictors, their names, and their scores.
+#' @examples
+#' \dontrun{
+#' data(mtcars)
+#' preddata <- mtcars[, -which(names(mtcars) == "mpg")]
+#' result <- topk(preddata, 3)
+#' print(result$toppreddata)
+#' print(result$prednames)
+#' print(result$scores)
+#' }
+#' @export
+topk <- function(predictor_matrix, top_k) {
+  if (!is.matrix(predictor_matrix) && !is.data.frame(predictor_matrix)) {
+    stop("predictor_matrix must be a matrix or a data frame.")
+  }
+
+  if (top_k > ncol(predictor_matrix)) {
+    stop("top_k must be less than or equal to the number of predictors in predictor_matrix.")
+  }
+
+  # Perform Singular Value Decomposition
+  svd_result <- svd(predictor_matrix)
+
+  # Extract the right singular vectors (V matrix)
+  V_matrix <- svd_result$v
+
+  # Identify the top K informative predictors based on the first right singular vector
+  # Considering the absolute values to measure impact regardless of sign
+  informative_scores <- abs(V_matrix[, 1])
+  top_predictor_indices <- order(informative_scores, decreasing = TRUE)[1:top_k]
+
+  # Retrieve the names of the top predictors
+  top_prednames <- colnames(predictor_matrix)[top_predictor_indices]
+
+  # Create a data frame of only the top K predictors
+  toppreddata <- predictor_matrix[, top_prednames, drop = FALSE]
+
+  return(list(
+    toppreddata = toppreddata,
+    prednames = top_prednames,
+    scores = informative_scores[top_predictor_indices]
+  ))
+}
+
+
+```
+
+Steps Performed:
+Data Loading and Preparation: Loads the mtcars dataset and prepares the predictor data by removing the mpg column, which is typically the response variable in regression tasks involving this dataset.
+Function Execution: Calls the topk function with the prepared predictor data and a request to identify the top 3 predictors. This function performs SVD to determine which predictors have the most influence based on the first right singular vector.
+
+
+
+
+```{r}
+data(mtcars)
+preddata <- mtcars[, -which(names(mtcars) == "mpg")]
+result <- topk(preddata, 3)
+print(result$toppreddata)
+print(result$prednames)
+print(result$scores)
+
+
+```
+
+
+Output Display: Prints three outputs:
+result$toppreddata: The subset of the data frame containing only the top 3 predictors.
+result$prednames: The names of these top 3 predictors.
+result$scores: The scores indicating the relative importance or influence of these predictors based on the SVD.
+Expected Outputs:
+Top Predictor Data (result$toppreddata): A data frame with only 3 columns, corresponding to the most informative predictors identified by SVD.
+Predictor Names (result$prednames): An array of 3 names corresponding to the predictors identified as most informative.
+Scores (result$scores): Numeric values representing the scores of these top predictors, indicating the magnitude of their coefficients in the context of the dataset's SVD.

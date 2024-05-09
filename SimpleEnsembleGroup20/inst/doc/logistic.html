@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Logistic Model</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Logistic Model</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SimpleEnsembleGroup20)</span></code></pre></div>
+<p>This function fits a logistic regression model using maximum
+likelihood estimation. It is designed to handle both numerical and
+categorical variables by internally converting categorical variables
+into dummy variables if necessary. The function offers an optional
+bagging mechanism to enhance the robustness of the model fit,
+particularly useful in datasets susceptible to overfitting or with high
+variance.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co">#&#39; Fit a Logistic Regression Model with Optional Bagging</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&#39;</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&#39; @description Fits a logistic regression model using maximum likelihood estimation. Supports both numerical</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&#39; and categorical variables by converting categorical variables into dummy variables.</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&#39; When bagging is TRUE, performs bagging to improve the robustness of the model fit.</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&#39;</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&#39; @param y Response variable, numeric vector of binary outcomes (0s and 1s).</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&#39; @param X Predictor variables, matrix or data frame.</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&#39; @param intercept Logical, if TRUE, an intercept term is added to the model.</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&#39; @param bagging Logical, if TRUE, performs bagging.</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&#39; @param R Integer, number of bootstrap samples for bagging.</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&#39; @return A list containing model details such as coefficients, standard errors,</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&#39;         z-values, p-values, and AIC values. If bagging is TRUE, returns</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&#39;         a list of aggregated results from the bagging procedure.</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&#39; @importFrom MASS ginv</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&#39; @export</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&#39; @examples</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&#39; data(iris)</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&#39; model &lt;- logistic(iris$Species == &quot;versicolor&quot;, iris[, -5], intercept = TRUE, bagging = FALSE)</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&#39; print(model)</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>logistic <span class="ot">&lt;-</span> <span class="cf">function</span>(y, X, <span class="at">intercept =</span> <span class="cn">TRUE</span>, <span class="at">bagging =</span> <span class="cn">FALSE</span>, <span class="at">R =</span> <span class="dv">100</span>) {</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>  <span class="cf">if</span> (intercept) {</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>    X <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">Intercept =</span> <span class="dv">1</span>, X)</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>  }</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span>bagging) {</span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>    op <span class="ot">&lt;-</span> <span class="fu">logistic_internal</span>(y, X, intercept)</span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a>    op <span class="ot">&lt;-</span> <span class="fu">perform_bagging</span>(y, X, <span class="cf">function</span>(response_sample, predictor_sample) {</span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>      <span class="fu">logistic_internal</span>(response_sample, predictor_sample, intercept)</span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>    }, R)</span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>  }</span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a>  op<span class="sc">$</span>type <span class="ot">&lt;-</span> <span class="st">&quot;logistic&quot;</span>  <span class="co"># Identify the model type for predict_model compatibility</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a>  op<span class="sc">$</span>names <span class="ot">&lt;-</span> <span class="fu">colnames</span>(X)</span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a>  <span class="fu">return</span>(op)</span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>}</span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="co">#&#39; Internal function to fit logistic regression model</span></span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a><span class="co">#&#39;</span></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a><span class="co">#&#39; @param y Response variable vector of binary outcomes (0s and 1s).</span></span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="co">#&#39; @param X Design matrix with predictors.</span></span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="co">#&#39; @return A list containing model fitting details.</span></span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a>logistic_internal <span class="ot">&lt;-</span> <span class="cf">function</span>(y, X, intercept) {</span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a>  <span class="cf">if</span> (intercept) {</span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a>    X <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">Intercept =</span> <span class="dv">1</span>, X)</span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a>  }</span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a></span>
+<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a>  model <span class="ot">&lt;-</span> <span class="fu">glm</span>(y <span class="sc">~</span> ., <span class="at">data =</span> <span class="fu">as.data.frame</span>(X), <span class="at">family =</span> <span class="fu">binomial</span>(<span class="at">link =</span> <span class="st">&quot;logit&quot;</span>))</span>
+<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a></span>
+<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a>  coefficients <span class="ot">&lt;-</span> <span class="fu">coef</span>(model)</span>
+<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a>  se_coefficients <span class="ot">&lt;-</span> <span class="fu">summary</span>(model)<span class="sc">$</span>coefficients[, <span class="st">&quot;Std. Error&quot;</span>]</span>
+<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a>  z_values <span class="ot">&lt;-</span> coefficients <span class="sc">/</span> se_coefficients</span>
+<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a>  p_values <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(z_values))</span>
+<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a>  AIC_value <span class="ot">&lt;-</span> <span class="fu">AIC</span>(model)</span>
+<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a></span>
+<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a>  <span class="co"># Summary table construction</span></span>
+<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a>  summary_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a>    <span class="at">Estimate =</span> coefficients,</span>
+<span id="cb2-62"><a href="#cb2-62" tabindex="-1"></a>    <span class="at">StdError =</span> se_coefficients,</span>
+<span id="cb2-63"><a href="#cb2-63" tabindex="-1"></a>    <span class="at">zValue =</span> z_values,</span>
+<span id="cb2-64"><a href="#cb2-64" tabindex="-1"></a>    <span class="at">Prz =</span> p_values</span>
+<span id="cb2-65"><a href="#cb2-65" tabindex="-1"></a>  )</span>
+<span id="cb2-66"><a href="#cb2-66" tabindex="-1"></a></span>
+<span id="cb2-67"><a href="#cb2-67" tabindex="-1"></a>  <span class="co"># Set the row names of the summary table to match the coefficient names</span></span>
+<span id="cb2-68"><a href="#cb2-68" tabindex="-1"></a>  betacols <span class="ot">&lt;-</span> <span class="fu">colnames</span>(X)</span>
+<span id="cb2-69"><a href="#cb2-69" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(coefficients) <span class="sc">==</span> <span class="fu">length</span>(betacols)) {</span>
+<span id="cb2-70"><a href="#cb2-70" tabindex="-1"></a>    <span class="fu">rownames</span>(summary_table) <span class="ot">&lt;-</span> betacols</span>
+<span id="cb2-71"><a href="#cb2-71" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb2-72"><a href="#cb2-72" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;Mismatch in the number of coefficients and predictor names&quot;</span>)</span>
+<span id="cb2-73"><a href="#cb2-73" tabindex="-1"></a>  }</span>
+<span id="cb2-74"><a href="#cb2-74" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="#cb2-75" tabindex="-1"></a>  <span class="fu">names</span>(coefficients) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(X)</span>
+<span id="cb2-76"><a href="#cb2-76" tabindex="-1"></a></span>
+<span id="cb2-77"><a href="#cb2-77" tabindex="-1"></a>  <span class="co"># Return a detailed list</span></span>
+<span id="cb2-78"><a href="#cb2-78" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(</span>
+<span id="cb2-79"><a href="#cb2-79" tabindex="-1"></a>    <span class="at">coefficients =</span> coefficients,</span>
+<span id="cb2-80"><a href="#cb2-80" tabindex="-1"></a>    <span class="at">se_coefficients =</span> se_coefficients,</span>
+<span id="cb2-81"><a href="#cb2-81" tabindex="-1"></a>    <span class="at">z_values =</span> z_values,</span>
+<span id="cb2-82"><a href="#cb2-82" tabindex="-1"></a>    <span class="at">p_values =</span> p_values,</span>
+<span id="cb2-83"><a href="#cb2-83" tabindex="-1"></a>    <span class="at">AIC =</span> AIC_value,</span>
+<span id="cb2-84"><a href="#cb2-84" tabindex="-1"></a>    <span class="at">summary =</span> summary_table,</span>
+<span id="cb2-85"><a href="#cb2-85" tabindex="-1"></a>    <span class="at">type =</span> <span class="st">&quot;logistic&quot;</span> </span>
+<span id="cb2-86"><a href="#cb2-86" tabindex="-1"></a>  ))</span>
+<span id="cb2-87"><a href="#cb2-87" tabindex="-1"></a>}</span></code></pre></div>
+<p>Details: This function uses the glm function from the base R stats
+package with a binomial family and a logit link function to fit the
+logistic regression model. It calculates the model’s coefficients, their
+standard errors, z-values, p-values, and the AIC.</p>
+<p>Value: Returns a detailed list similar to the logistic function,
+containing model coefficients, standard errors, z-values, p-values, AIC
+value, and a summary table of the model.</p>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

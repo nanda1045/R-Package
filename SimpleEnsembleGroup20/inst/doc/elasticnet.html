@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Elastic Net Model</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Elastic Net Model</h1>
+
+
+
+<p>The elasticnet function constructs a predictive model using elastic
+net regularization, which combines both L1 (lasso) and L2 (ridge)
+penalties. This approach helps manage multicollinearity among
+predictors, reduce overfitting, and enhance model sparsity. It is
+particularly effective when the number of predictors exceeds the number
+of observations. The function supports optional bagging (bootstrap
+aggregation) to further improve model stability and accuracy by
+averaging results across multiple bootstrap samples.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SimpleEnsembleGroup20)</span></code></pre></div>
+<p>Arguments: y: A vector containing the response variable. It should be
+continuous for regression tasks or binary (0 and 1) for classification
+tasks. X: A matrix or data frame of predictor variables. Variables can
+be numeric or categorical, but should be properly formatted and encoded
+before being passed to this function. regularization_param: Optional; a
+numeric value specifying the strength of the regularization. If NULL,
+the function will determine an optimal value using cross-validation.
+alpha: A numeric value between 0 and 1 that balances the lasso (L1) and
+ridge (L2) penalties. An alpha of 1 represents a full lasso model, while
+0 represents a full ridge model. intercept: A logical value indicating
+whether to include an intercept term in the model. Defaults to TRUE.
+type: Specifies the model type: ‘binomial’ for classification or
+‘gaussian’ for regression. baggingformodel: A logical indicator whether
+to apply bagging. If TRUE, the model will perform bootstrap aggregation
+to create multiple samples, fit models to these samples, and average the
+results. R: The number of bootstrap replicates to use if bagging is
+enabled. Only required and used if baggingformodel is TRUE.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co">#&#39; @title Fit Elastic Net Model</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&#39;</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&#39; @description Constructs a regularized predictive model using the glmnet package, balancing model</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&#39; complexity and predictive prowess through a combination of L1 (lasso) and L2 (ridge) regularization penalties.</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&#39; This technique addresses multicollinearity concerns, mitigates overfitting, and encourages sparsity in coefficients,</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&#39; proving advantageous when the number of predictors outstrips the number of observations. Optionally, a</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&#39; bagging strategy (bootstrap aggregation) can be employed to bolster model robustness and predictive</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&#39; performance by amalgamating results from multiple bootstrap samples.</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&#39;</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&#39; @param y Response vector, continuous for regression or binary for classification.</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&#39; @param X Matrix of predictor variables, numeric or categorical.</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&#39; @param regularization_param Regularization strength parameter for elastic net penalty; if NULL, determined via cross-validation.</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&#39; @param alpha Mixing parameter for elastic net penalty, with values between 0 and 1.</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&#39; A value of 1 corresponds to lasso penalty, while 0 corresponds to ridge penalty.</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&#39; @param intercept Logical indicating whether to include an intercept term in the model.</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&#39; @param type A character string specifying the target type: &#39;binomial&#39; for classification or &#39;gaussian&#39; for regression.</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&#39; @param baggingformodel Logical indicating whether to employ bootstrap aggregation (bagging).</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&#39; @param R Integer specifying the number of bootstrap samples for bagging if enabled.</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&#39; @return A list containing the regularized predictive model details, or if baggingformodel is enabled, an aggregated</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&#39; result from multiple bootstrap samples, including the model, regularization parameter value, coefficients,</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&#39; and predicted values (continuous for gaussian, probabilities for binomial).</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&#39; @importFrom glmnet glmnet cv.glmnet</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&#39; @export</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&#39; @examples</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&#39; # Example for Gaussian Model (Regression)</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&#39; data(Boston)</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&#39; X &lt;- Boston[, c(&quot;lstat&quot;, &quot;rm&quot;)]</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&#39; y &lt;- Boston$medv</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&#39; result &lt;- elasticnet(y = y, X = X, type = &quot;gaussian&quot;, alpha = 0.5, baggingformodel = FALSE)</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&#39; print(result)</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&#39;</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&#39; # Example for Binomial Model (Classification)</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&#39; data(PimaIndiansDiabetes)</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&#39; X &lt;- PimaIndiansDiabetes[, c(&quot;glucose&quot;, &quot;BMI&quot;)]</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&#39; y &lt;- PimaIndiansDiabetes$diabetes</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&#39; result &lt;- elasticnet(y = y, X = X, type = &quot;binomial&quot;, alpha = 0.5, baggingformodel = TRUE, R = 50)</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="co">#&#39; print(result)</span></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>elasticnet <span class="ot">&lt;-</span> <span class="cf">function</span>(y, X, <span class="at">regularization_param =</span> <span class="cn">NULL</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">intercept =</span> <span class="cn">TRUE</span>, <span class="at">baggingformodel =</span> <span class="cn">FALSE</span>, <span class="at">type =</span> <span class="st">&quot;gaussian&quot;</span>, <span class="at">R =</span> <span class="dv">100</span>) {</span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a>  <span class="fu">validate_data</span>(y, X)</span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span>(<span class="fu">is.numeric</span>(alpha) <span class="sc">&amp;&amp;</span> alpha <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> alpha <span class="sc">&lt;=</span> <span class="dv">1</span>)) {</span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;The &#39;alpha&#39; parameter should be a numeric value within the range [0, 1]&quot;</span>)</span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a>  }</span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span>type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;binomial&quot;</span>, <span class="st">&quot;gaussian&quot;</span>)) {</span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;&#39;type&#39; must be either &#39;binomial&#39; or &#39;gaussian&#39;&quot;</span>)</span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a>  }</span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a>  family_spec <span class="ot">&lt;-</span> type</span>
+<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(regularization_param)) {</span>
+<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(<span class="at">x =</span> <span class="fu">as.matrix</span>(X), <span class="at">y =</span> y, <span class="at">alpha =</span> alpha, <span class="at">family =</span> family_spec, <span class="at">intercept =</span> intercept)</span>
+<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a>    regularization_param <span class="ot">&lt;-</span> res<span class="sc">$</span>lambda.min</span>
+<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a>  }</span>
+<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a>  op <span class="ot">&lt;-</span> <span class="cf">if</span> (baggingformodel) {</span>
+<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a>    <span class="fu">perform_bagging</span>(y, X, <span class="cf">function</span>(y_sample, X_sample) {</span>
+<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a>      fit <span class="ot">&lt;-</span> <span class="fu">glmnet</span>(<span class="at">x =</span> <span class="fu">as.matrix</span>(X_sample), <span class="at">y =</span> y_sample, <span class="at">alpha =</span> alpha, <span class="at">lambda =</span> regularization_param, <span class="at">family =</span> family_spec, <span class="at">intercept =</span> intercept)</span>
+<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a>      <span class="fu">list</span>(<span class="at">coefs =</span> <span class="fu">coef</span>(fit), <span class="at">preds =</span> <span class="fu">predict</span>(fit, <span class="at">newx =</span> <span class="fu">as.matrix</span>(X_sample), <span class="at">type =</span> <span class="st">&quot;response&quot;</span>))</span>
+<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a>    }, R)</span>
+<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb2-62"><a href="#cb2-62" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">glmnet</span>(<span class="at">x =</span> <span class="fu">as.matrix</span>(X), <span class="at">y =</span> y, <span class="at">alpha =</span> alpha, <span class="at">lambda =</span> regularization_param, <span class="at">family =</span> family_spec, <span class="at">intercept =</span> intercept)</span>
+<span id="cb2-63"><a href="#cb2-63" tabindex="-1"></a></span>
+<span id="cb2-64"><a href="#cb2-64" tabindex="-1"></a>    preds <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newx =</span> <span class="fu">as.matrix</span>(X), <span class="at">type =</span> <span class="st">&quot;response&quot;</span>, <span class="at">s =</span> <span class="st">&quot;lambda.min&quot;</span>)</span>
+<span id="cb2-65"><a href="#cb2-65" tabindex="-1"></a>    coefs <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit, <span class="at">s =</span> <span class="st">&quot;lambda.min&quot;</span>) <span class="co"># Include intercept if intercept is TRUE</span></span>
+<span id="cb2-66"><a href="#cb2-66" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">model =</span> fit, <span class="at">regularization_param =</span> regularization_param, <span class="at">coefs =</span> coefs, <span class="at">preds =</span> preds)</span>
+<span id="cb2-67"><a href="#cb2-67" tabindex="-1"></a>  }</span>
+<span id="cb2-68"><a href="#cb2-68" tabindex="-1"></a>  op<span class="sc">$</span>type <span class="ot">&lt;-</span> type <span class="co"># Identifying the target type for prediction function</span></span>
+<span id="cb2-69"><a href="#cb2-69" tabindex="-1"></a>  <span class="cf">if</span> (intercept) {</span>
+<span id="cb2-70"><a href="#cb2-70" tabindex="-1"></a>    op<span class="sc">$</span>names <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Intercept&quot;</span>, <span class="fu">colnames</span>(X))</span>
+<span id="cb2-71"><a href="#cb2-71" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb2-72"><a href="#cb2-72" tabindex="-1"></a>    op<span class="sc">$</span>names <span class="ot">&lt;-</span> <span class="fu">colnames</span>(X)</span>
+<span id="cb2-73"><a href="#cb2-73" tabindex="-1"></a>  }</span>
+<span id="cb2-74"><a href="#cb2-74" tabindex="-1"></a>  <span class="fu">return</span>(op)</span>
+<span id="cb2-75"><a href="#cb2-75" tabindex="-1"></a>}</span></code></pre></div>
+<p>The function returns a list containing the following components:</p>
+<p>model: The fitted glmnet model object (only returned when
+baggingformodel is FALSE). regularization_param: The lambda value used
+for regularization. coefs: The coefficients from the model at the best
+lambda. preds: Predictions made by the model on the dataset. type: The
+type of model fitted (‘gaussian’ or ‘binomial’). names: Names of the
+predictors included in the model, including “Intercept” if it was
+added.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Example usage with the Boston dataset</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">data</span>(Boston)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>X <span class="ot">&lt;-</span> Boston[, <span class="fu">c</span>(<span class="st">&quot;lstat&quot;</span>, <span class="st">&quot;rm&quot;</span>)]</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>y <span class="ot">&lt;-</span> Boston<span class="sc">$</span>medv</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">elasticnet</span>(<span class="at">y =</span> y, <span class="at">X =</span> X, <span class="at">type =</span> <span class="st">&quot;gaussian&quot;</span>, <span class="at">baggingformodel =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="fu">print</span>(result)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; $model</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; Call:  glmnet(x = as.matrix(X), y = y, family = family_spec, alpha = alpha,      lambda = regularization_param, intercept = intercept) </span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt;   Df  %Dev  Lambda</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; 1  2 63.85 0.06147</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt; $regularization_param</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; [1] 0.06147167</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; $coefs</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt; 3 x 1 sparse Matrix of class &quot;dgCMatrix&quot;</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt;                     s1</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; (Intercept) -1.2053117</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; lstat       -0.6379494</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; rm           5.0615725</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt; $preds</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt;             s1</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="co">#&gt; 1   28.8975394</span></span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="co">#&gt; 2   25.4641875</span></span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="co">#&gt; 3   32.5911506</span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="co">#&gt; 4   32.3400014</span></span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="co">#&gt; 5   31.5694765</span></span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="co">#&gt; 6   28.0168830</span></span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co">#&gt; 7   21.2951507</span></span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co">#&gt; 8   17.8179820</span></span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt; 9    8.2025762</span></span>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co">#&gt; 10  18.2754342</span></span>
+<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a><span class="co">#&gt; 11  18.0262701</span></span>
+<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a><span class="co">#&gt; 12  20.7440884</span></span>
+<span id="cb3-39"><a href="#cb3-39" tabindex="-1"></a><span class="co">#&gt; 13  18.5801031</span></span>
+<span id="cb3-40"><a href="#cb3-40" tabindex="-1"></a><span class="co">#&gt; 14  23.6365208</span></span>
+<span id="cb3-41"><a href="#cb3-41" tabindex="-1"></a><span class="co">#&gt; 15  23.1046731</span></span>
+<span id="cb3-42"><a href="#cb3-42" tabindex="-1"></a><span class="co">#&gt; 16  22.9204706</span></span>
+<span id="cb3-43"><a href="#cb3-43" tabindex="-1"></a><span class="co">#&gt; 17  24.6374138</span></span>
+<span id="cb3-44"><a href="#cb3-44" tabindex="-1"></a><span class="co">#&gt; 18  19.7547893</span></span>
+<span id="cb3-45"><a href="#cb3-45" tabindex="-1"></a><span class="co">#&gt; 19  18.9529989</span></span>
+<span id="cb3-46"><a href="#cb3-46" tabindex="-1"></a><span class="co">#&gt; 20  20.5862444</span></span>
+<span id="cb3-47"><a href="#cb3-47" tabindex="-1"></a><span class="co">#&gt; 21  13.5779499</span></span>
+<span id="cb3-48"><a href="#cb3-48" tabindex="-1"></a><span class="co">#&gt; 22  20.1641275</span></span>
+<span id="cb3-49"><a href="#cb3-49" tabindex="-1"></a><span class="co">#&gt; 23  17.9404531</span></span>
+<span id="cb3-50"><a href="#cb3-50" tabindex="-1"></a><span class="co">#&gt; 24  15.5351744</span></span>
+<span id="cb3-51"><a href="#cb3-51" tabindex="-1"></a><span class="co">#&gt; 25  18.3808679</span></span>
+<span id="cb3-52"><a href="#cb3-52" tabindex="-1"></a><span class="co">#&gt; 26  16.6018875</span></span>
+<span id="cb3-53"><a href="#cb3-53" tabindex="-1"></a><span class="co">#&gt; 27  18.7695781</span></span>
+<span id="cb3-54"><a href="#cb3-54" tabindex="-1"></a><span class="co">#&gt; 28  18.3782509</span></span>
+<span id="cb3-55"><a href="#cb3-55" tabindex="-1"></a><span class="co">#&gt; 29  23.5038489</span></span>
+<span id="cb3-56"><a href="#cb3-56" tabindex="-1"></a><span class="co">#&gt; 30  24.9329889</span></span>
+<span id="cb3-57"><a href="#cb3-57" tabindex="-1"></a><span class="co">#&gt; 31  13.2937946</span></span>
+<span id="cb3-58"><a href="#cb3-58" tabindex="-1"></a><span class="co">#&gt; 32  21.2096959</span></span>
+<span id="cb3-59"><a href="#cb3-59" tabindex="-1"></a><span class="co">#&gt; 33  11.2334657</span></span>
+<span id="cb3-60"><a href="#cb3-60" tabindex="-1"></a><span class="co">#&gt; 34  15.9443409</span></span>
+<span id="cb3-61"><a href="#cb3-61" tabindex="-1"></a><span class="co">#&gt; 35  16.6741427</span></span>
+<span id="cb3-62"><a href="#cb3-62" tabindex="-1"></a><span class="co">#&gt; 36  22.6496474</span></span>
+<span id="cb3-63"><a href="#cb3-63" tabindex="-1"></a><span class="co">#&gt; 37  21.0803302</span></span>
+<span id="cb3-64"><a href="#cb3-64" tabindex="-1"></a><span class="co">#&gt; 38  22.8100709</span></span>
+<span id="cb3-65"><a href="#cb3-65" tabindex="-1"></a><span class="co">#&gt; 39  22.5296021</span></span>
+<span id="cb3-66"><a href="#cb3-66" tabindex="-1"></a><span class="co">#&gt; 40  29.4198175</span></span>
+<span id="cb3-67"><a href="#cb3-67" tabindex="-1"></a><span class="co">#&gt; 41  33.0840338</span></span>
+<span id="cb3-68"><a href="#cb3-68" tabindex="-1"></a><span class="co">#&gt; 42  29.9738589</span></span>
+<span id="cb3-69"><a href="#cb3-69" tabindex="-1"></a><span class="co">#&gt; 43  26.3130429</span></span>
+<span id="cb3-70"><a href="#cb3-70" tabindex="-1"></a><span class="co">#&gt; 44  25.4857713</span></span>
+<span id="cb3-71"><a href="#cb3-71" tabindex="-1"></a><span class="co">#&gt; 45  23.4209547</span></span>
+<span id="cb3-72"><a href="#cb3-72" tabindex="-1"></a><span class="co">#&gt; 46  21.0410795</span></span>
+<span id="cb3-73"><a href="#cb3-73" tabindex="-1"></a><span class="co">#&gt; 47  19.0539622</span></span>
+<span id="cb3-74"><a href="#cb3-74" tabindex="-1"></a><span class="co">#&gt; 48  17.3225210</span></span>
+<span id="cb3-75"><a href="#cb3-75" tabindex="-1"></a><span class="co">#&gt; 49   6.4668959</span></span>
+<span id="cb3-76"><a href="#cb3-76" tabindex="-1"></a><span class="co">#&gt; 50  16.8148365</span></span>
+<span id="cb3-77"><a href="#cb3-77" tabindex="-1"></a><span class="co">#&gt; 51  20.3964252</span></span>
+<span id="cb3-78"><a href="#cb3-78" tabindex="-1"></a><span class="co">#&gt; 52  23.7303410</span></span>
+<span id="cb3-79"><a href="#cb3-79" tabindex="-1"></a><span class="co">#&gt; 53  28.3822139</span></span>
+<span id="cb3-80"><a href="#cb3-80" tabindex="-1"></a><span class="co">#&gt; 54  23.7760864</span></span>
+<span id="cb3-81"><a href="#cb3-81" tabindex="-1"></a><span class="co">#&gt; 55  19.1555755</span></span>
+<span id="cb3-82"><a href="#cb3-82" tabindex="-1"></a><span class="co">#&gt; 56  32.4174907</span></span>
+<span id="cb3-83"><a href="#cb3-83" tabindex="-1"></a><span class="co">#&gt; 57  27.4217374</span></span>
+<span id="cb3-84"><a href="#cb3-84" tabindex="-1"></a><span class="co">#&gt; 58  30.7744663</span></span>
+<span id="cb3-85"><a href="#cb3-85" tabindex="-1"></a><span class="co">#&gt; 59  25.5217182</span></span>
+<span id="cb3-86"><a href="#cb3-86" tabindex="-1"></a><span class="co">#&gt; 60  22.9127347</span></span>
+<span id="cb3-87"><a href="#cb3-87" tabindex="-1"></a><span class="co">#&gt; 61  19.4641409</span></span>
+<span id="cb3-88"><a href="#cb3-88" tabindex="-1"></a><span class="co">#&gt; 62  19.7800400</span></span>
+<span id="cb3-89"><a href="#cb3-89" tabindex="-1"></a><span class="co">#&gt; 63  27.1788007</span></span>
+<span id="cb3-90"><a href="#cb3-90" tabindex="-1"></a><span class="co">#&gt; 64  26.9605219</span></span>
+<span id="cb3-91"><a href="#cb3-91" tabindex="-1"></a><span class="co">#&gt; 65  29.6166064</span></span>
+<span id="cb3-92"><a href="#cb3-92" tabindex="-1"></a><span class="co">#&gt; 66  27.6527555</span></span>
+<span id="cb3-93"><a href="#cb3-93" tabindex="-1"></a><span class="co">#&gt; 67  21.5534061</span></span>
+<span id="cb3-94"><a href="#cb3-94" tabindex="-1"></a><span class="co">#&gt; 68  23.3792211</span></span>
+<span id="cb3-95"><a href="#cb3-95" tabindex="-1"></a><span class="co">#&gt; 69  18.7583667</span></span>
+<span id="cb3-96"><a href="#cb3-96" tabindex="-1"></a><span class="co">#&gt; 70  22.9744669</span></span>
+<span id="cb3-97"><a href="#cb3-97" tabindex="-1"></a><span class="co">#&gt; 71  26.9877789</span></span>
+<span id="cb3-98"><a href="#cb3-98" tabindex="-1"></a><span class="co">#&gt; 72  22.6637816</span></span>
+<span id="cb3-99"><a href="#cb3-99" tabindex="-1"></a><span class="co">#&gt; 73  25.9716447</span></span>
+<span id="cb3-100"><a href="#cb3-100" tabindex="-1"></a><span class="co">#&gt; 74  25.5940699</span></span>
+<span id="cb3-101"><a href="#cb3-101" tabindex="-1"></a><span class="co">#&gt; 75  26.2206355</span></span>
+<span id="cb3-102"><a href="#cb3-102" tabindex="-1"></a><span class="co">#&gt; 76  24.9084651</span></span>
+<span id="cb3-103"><a href="#cb3-103" tabindex="-1"></a><span class="co">#&gt; 77  22.9400473</span></span>
+<span id="cb3-104"><a href="#cb3-104" tabindex="-1"></a><span class="co">#&gt; 78  23.3210028</span></span>
+<span id="cb3-105"><a href="#cb3-105" tabindex="-1"></a><span class="co">#&gt; 79  22.4661121</span></span>
+<span id="cb3-106"><a href="#cb3-106" tabindex="-1"></a><span class="co">#&gt; 80  22.7210253</span></span>
+<span id="cb3-107"><a href="#cb3-107" tabindex="-1"></a><span class="co">#&gt; 81  29.4691341</span></span>
+<span id="cb3-108"><a href="#cb3-108" tabindex="-1"></a><span class="co">#&gt; 82  27.6912418</span></span>
+<span id="cb3-109"><a href="#cb3-109" tabindex="-1"></a><span class="co">#&gt; 83  26.4056980</span></span>
+<span id="cb3-110"><a href="#cb3-110" tabindex="-1"></a><span class="co">#&gt; 84  25.2184057</span></span>
+<span id="cb3-111"><a href="#cb3-111" tabindex="-1"></a><span class="co">#&gt; 85  24.9960015</span></span>
+<span id="cb3-112"><a href="#cb3-112" tabindex="-1"></a><span class="co">#&gt; 86  28.1871042</span></span>
+<span id="cb3-113"><a href="#cb3-113" tabindex="-1"></a><span class="co">#&gt; 87  21.0360171</span></span>
+<span id="cb3-114"><a href="#cb3-114" tabindex="-1"></a><span class="co">#&gt; 88  24.3922804</span></span>
+<span id="cb3-115"><a href="#cb3-115" tabindex="-1"></a><span class="co">#&gt; 89  30.7524050</span></span>
+<span id="cb3-116"><a href="#cb3-116" tabindex="-1"></a><span class="co">#&gt; 90  30.9892483</span></span>
+<span id="cb3-117"><a href="#cb3-117" tabindex="-1"></a><span class="co">#&gt; 91  25.6544645</span></span>
+<span id="cb3-118"><a href="#cb3-118" tabindex="-1"></a><span class="co">#&gt; 92  25.9828748</span></span>
+<span id="cb3-119"><a href="#cb3-119" tabindex="-1"></a><span class="co">#&gt; 93  26.1956710</span></span>
+<span id="cb3-120"><a href="#cb3-120" tabindex="-1"></a><span class="co">#&gt; 94  26.2704492</span></span>
+<span id="cb3-121"><a href="#cb3-121" tabindex="-1"></a><span class="co">#&gt; 95  23.6685703</span></span>
+<span id="cb3-122"><a href="#cb3-122" tabindex="-1"></a><span class="co">#&gt; 96  28.0852424</span></span>
+<span id="cb3-123"><a href="#cb3-123" tabindex="-1"></a><span class="co">#&gt; 97  22.7548130</span></span>
+<span id="cb3-124"><a href="#cb3-124" tabindex="-1"></a><span class="co">#&gt; 98  36.9507498</span></span>
+<span id="cb3-125"><a href="#cb3-125" tabindex="-1"></a><span class="co">#&gt; 99  36.0987059</span></span>
+<span id="cb3-126"><a href="#cb3-126" tabindex="-1"></a><span class="co">#&gt; 100 32.3824030</span></span>
+<span id="cb3-127"><a href="#cb3-127" tabindex="-1"></a><span class="co">#&gt; 101 26.8344029</span></span>
+<span id="cb3-128"><a href="#cb3-128" tabindex="-1"></a><span class="co">#&gt; 102 28.2241393</span></span>
+<span id="cb3-129"><a href="#cb3-129" tabindex="-1"></a><span class="co">#&gt; 103 24.4326577</span></span>
+<span id="cb3-130"><a href="#cb3-130" tabindex="-1"></a><span class="co">#&gt; 104 21.2835183</span></span>
+<span id="cb3-131"><a href="#cb3-131" tabindex="-1"></a><span class="co">#&gt; 105 22.1434894</span></span>
+<span id="cb3-132"><a href="#cb3-132" tabindex="-1"></a><span class="co">#&gt; 106 17.9029217</span></span>
+<span id="cb3-133"><a href="#cb3-133" tabindex="-1"></a><span class="co">#&gt; 107 16.4298889</span></span>
+<span id="cb3-134"><a href="#cb3-134" tabindex="-1"></a><span class="co">#&gt; 108 20.8182354</span></span>
+<span id="cb3-135"><a href="#cb3-135" tabindex="-1"></a><span class="co">#&gt; 109 23.7356691</span></span>
+<span id="cb3-136"><a href="#cb3-136" tabindex="-1"></a><span class="co">#&gt; 110 20.4031096</span></span>
+<span id="cb3-137"><a href="#cb3-137" tabindex="-1"></a><span class="co">#&gt; 111 21.8577873</span></span>
+<span id="cb3-138"><a href="#cb3-138" tabindex="-1"></a><span class="co">#&gt; 112 26.3015814</span></span>
+<span id="cb3-139"><a href="#cb3-139" tabindex="-1"></a><span class="co">#&gt; 113 18.3826061</span></span>
+<span id="cb3-140"><a href="#cb3-140" tabindex="-1"></a><span class="co">#&gt; 114 18.7272321</span></span>
+<span id="cb3-141"><a href="#cb3-141" tabindex="-1"></a><span class="co">#&gt; 115 23.7831911</span></span>
+<span id="cb3-142"><a href="#cb3-142" tabindex="-1"></a><span class="co">#&gt; 116 18.7456069</span></span>
+<span id="cb3-143"><a href="#cb3-143" tabindex="-1"></a><span class="co">#&gt; 117 22.3740488</span></span>
+<span id="cb3-144"><a href="#cb3-144" tabindex="-1"></a><span class="co">#&gt; 118 22.6995371</span></span>
+<span id="cb3-145"><a href="#cb3-145" tabindex="-1"></a><span class="co">#&gt; 119 18.7109592</span></span>
+<span id="cb3-146"><a href="#cb3-146" tabindex="-1"></a><span class="co">#&gt; 120 19.1200684</span></span>
+<span id="cb3-147"><a href="#cb3-147" tabindex="-1"></a><span class="co">#&gt; 121 19.3387855</span></span>
+<span id="cb3-148"><a href="#cb3-148" tabindex="-1"></a><span class="co">#&gt; 122 20.0808311</span></span>
+<span id="cb3-149"><a href="#cb3-149" tabindex="-1"></a><span class="co">#&gt; 123 17.5282885</span></span>
+<span id="cb3-150"><a href="#cb3-150" tabindex="-1"></a><span class="co">#&gt; 124 12.2249616</span></span>
+<span id="cb3-151"><a href="#cb3-151" tabindex="-1"></a><span class="co">#&gt; 125 17.3365219</span></span>
+<span id="cb3-152"><a href="#cb3-152" tabindex="-1"></a><span class="co">#&gt; 126 19.6452301</span></span>
+<span id="cb3-153"><a href="#cb3-153" tabindex="-1"></a><span class="co">#&gt; 127  9.8147930</span></span>
+<span id="cb3-154"><a href="#cb3-154" tabindex="-1"></a><span class="co">#&gt; 128 16.6438697</span></span>
+<span id="cb3-155"><a href="#cb3-155" tabindex="-1"></a><span class="co">#&gt; 129 21.5276192</span></span>
+<span id="cb3-156"><a href="#cb3-156" tabindex="-1"></a><span class="co">#&gt; 130 15.6267798</span></span>
+<span id="cb3-157"><a href="#cb3-157" tabindex="-1"></a><span class="co">#&gt; 131 23.4441606</span></span>
+<span id="cb3-158"><a href="#cb3-158" tabindex="-1"></a><span class="co">#&gt; 132 22.9929358</span></span>
+<span id="cb3-159"><a href="#cb3-159" tabindex="-1"></a><span class="co">#&gt; 133 23.9530306</span></span>
+<span id="cb3-160"><a href="#cb3-160" tabindex="-1"></a><span class="co">#&gt; 134 18.6747833</span></span>
+<span id="cb3-161"><a href="#cb3-161" tabindex="-1"></a><span class="co">#&gt; 135 16.8912564</span></span>
+<span id="cb3-162"><a href="#cb3-162" tabindex="-1"></a><span class="co">#&gt; 136 20.0401276</span></span>
+<span id="cb3-163"><a href="#cb3-163" tabindex="-1"></a><span class="co">#&gt; 137 18.0892066</span></span>
+<span id="cb3-164"><a href="#cb3-164" tabindex="-1"></a><span class="co">#&gt; 138 22.1543949</span></span>
+<span id="cb3-165"><a href="#cb3-165" tabindex="-1"></a><span class="co">#&gt; 139 14.8392364</span></span>
+<span id="cb3-166"><a href="#cb3-166" tabindex="-1"></a><span class="co">#&gt; 140 18.1518741</span></span>
+<span id="cb3-167"><a href="#cb3-167" tabindex="-1"></a><span class="co">#&gt; 141 14.6319784</span></span>
+<span id="cb3-168"><a href="#cb3-168" tabindex="-1"></a><span class="co">#&gt; 142  2.2468804</span></span>
+<span id="cb3-169"><a href="#cb3-169" tabindex="-1"></a><span class="co">#&gt; 143  9.0325605</span></span>
+<span id="cb3-170"><a href="#cb3-170" tabindex="-1"></a><span class="co">#&gt; 144  9.6167425</span></span>
+<span id="cb3-171"><a href="#cb3-171" tabindex="-1"></a><span class="co">#&gt; 145  4.9260391</span></span>
+<span id="cb3-172"><a href="#cb3-172" tabindex="-1"></a><span class="co">#&gt; 146 12.0871333</span></span>
+<span id="cb3-173"><a href="#cb3-173" tabindex="-1"></a><span class="co">#&gt; 147 16.6593602</span></span>
+<span id="cb3-174"><a href="#cb3-174" tabindex="-1"></a><span class="co">#&gt; 148  4.8893474</span></span>
+<span id="cb3-175"><a href="#cb3-175" tabindex="-1"></a><span class="co">#&gt; 149  6.9772751</span></span>
+<span id="cb3-176"><a href="#cb3-176" tabindex="-1"></a><span class="co">#&gt; 150 13.4402941</span></span>
+<span id="cb3-177"><a href="#cb3-177" tabindex="-1"></a><span class="co">#&gt; 151 20.7865481</span></span>
+<span id="cb3-178"><a href="#cb3-178" tabindex="-1"></a><span class="co">#&gt; 152 17.6754576</span></span>
+<span id="cb3-179"><a href="#cb3-179" tabindex="-1"></a><span class="co">#&gt; 153 16.4313425</span></span>
+<span id="cb3-180"><a href="#cb3-180" tabindex="-1"></a><span class="co">#&gt; 154 17.6179841</span></span>
+<span id="cb3-181"><a href="#cb3-181" tabindex="-1"></a><span class="co">#&gt; 155 20.1712706</span></span>
+<span id="cb3-182"><a href="#cb3-182" tabindex="-1"></a><span class="co">#&gt; 156 20.3514818</span></span>
+<span id="cb3-183"><a href="#cb3-183" tabindex="-1"></a><span class="co">#&gt; 157 15.1827946</span></span>
+<span id="cb3-184"><a href="#cb3-184" tabindex="-1"></a><span class="co">#&gt; 158 31.0089983</span></span>
+<span id="cb3-185"><a href="#cb3-185" tabindex="-1"></a><span class="co">#&gt; 159 25.3961723</span></span>
+<span id="cb3-186"><a href="#cb3-186" tabindex="-1"></a><span class="co">#&gt; 160 27.0310790</span></span>
+<span id="cb3-187"><a href="#cb3-187" tabindex="-1"></a><span class="co">#&gt; 161 26.9207946</span></span>
+<span id="cb3-188"><a href="#cb3-188" tabindex="-1"></a><span class="co">#&gt; 162 35.5971523</span></span>
+<span id="cb3-189"><a href="#cb3-189" tabindex="-1"></a><span class="co">#&gt; 163 37.0602142</span></span>
+<span id="cb3-190"><a href="#cb3-190" tabindex="-1"></a><span class="co">#&gt; 164 39.0673660</span></span>
+<span id="cb3-191"><a href="#cb3-191" tabindex="-1"></a><span class="co">#&gt; 165 20.9994023</span></span>
+<span id="cb3-192"><a href="#cb3-192" tabindex="-1"></a><span class="co">#&gt; 166 23.4170582</span></span>
+<span id="cb3-193"><a href="#cb3-193" tabindex="-1"></a><span class="co">#&gt; 167 36.5674838</span></span>
+<span id="cb3-194"><a href="#cb3-194" tabindex="-1"></a><span class="co">#&gt; 168 20.7968437</span></span>
+<span id="cb3-195"><a href="#cb3-195" tabindex="-1"></a><span class="co">#&gt; 169 23.6975262</span></span>
+<span id="cb3-196"><a href="#cb3-196" tabindex="-1"></a><span class="co">#&gt; 170 23.9772878</span></span>
+<span id="cb3-197"><a href="#cb3-197" tabindex="-1"></a><span class="co">#&gt; 171 19.3258163</span></span>
+<span id="cb3-198"><a href="#cb3-198" tabindex="-1"></a><span class="co">#&gt; 172 20.8822029</span></span>
+<span id="cb3-199"><a href="#cb3-199" tabindex="-1"></a><span class="co">#&gt; 173 17.6262930</span></span>
+<span id="cb3-200"><a href="#cb3-200" tabindex="-1"></a><span class="co">#&gt; 174 25.5026746</span></span>
+<span id="cb3-201"><a href="#cb3-201" tabindex="-1"></a><span class="co">#&gt; 175 22.3006090</span></span>
+<span id="cb3-202"><a href="#cb3-202" tabindex="-1"></a><span class="co">#&gt; 176 28.5274715</span></span>
+<span id="cb3-203"><a href="#cb3-203" tabindex="-1"></a><span class="co">#&gt; 177 22.8156860</span></span>
+<span id="cb3-204"><a href="#cb3-204" tabindex="-1"></a><span class="co">#&gt; 178 26.7458167</span></span>
+<span id="cb3-205"><a href="#cb3-205" tabindex="-1"></a><span class="co">#&gt; 179 29.1024656</span></span>
+<span id="cb3-206"><a href="#cb3-206" tabindex="-1"></a><span class="co">#&gt; 180 30.9091993</span></span>
+<span id="cb3-207"><a href="#cb3-207" tabindex="-1"></a><span class="co">#&gt; 181 33.2749011</span></span>
+<span id="cb3-208"><a href="#cb3-208" tabindex="-1"></a><span class="co">#&gt; 182 23.8643676</span></span>
+<span id="cb3-209"><a href="#cb3-209" tabindex="-1"></a><span class="co">#&gt; 183 31.9353233</span></span>
+<span id="cb3-210"><a href="#cb3-210" tabindex="-1"></a><span class="co">#&gt; 184 28.3902359</span></span>
+<span id="cb3-211"><a href="#cb3-211" tabindex="-1"></a><span class="co">#&gt; 185 18.2412074</span></span>
+<span id="cb3-212"><a href="#cb3-212" tabindex="-1"></a><span class="co">#&gt; 186 21.5495088</span></span>
+<span id="cb3-213"><a href="#cb3-213" tabindex="-1"></a><span class="co">#&gt; 187 35.5929877</span></span>
+<span id="cb3-214"><a href="#cb3-214" tabindex="-1"></a><span class="co">#&gt; 188 28.8607708</span></span>
+<span id="cb3-215"><a href="#cb3-215" tabindex="-1"></a><span class="co">#&gt; 189 29.0693083</span></span>
+<span id="cb3-216"><a href="#cb3-216" tabindex="-1"></a><span class="co">#&gt; 190 31.7235393</span></span>
+<span id="cb3-217"><a href="#cb3-217" tabindex="-1"></a><span class="co">#&gt; 191 30.7241367</span></span>
+<span id="cb3-218"><a href="#cb3-218" tabindex="-1"></a><span class="co">#&gt; 192 29.9126426</span></span>
+<span id="cb3-219"><a href="#cb3-219" tabindex="-1"></a><span class="co">#&gt; 193 33.2957409</span></span>
+<span id="cb3-220"><a href="#cb3-220" tabindex="-1"></a><span class="co">#&gt; 194 30.0044957</span></span>
+<span id="cb3-221"><a href="#cb3-221" tabindex="-1"></a><span class="co">#&gt; 195 29.4270946</span></span>
+<span id="cb3-222"><a href="#cb3-222" tabindex="-1"></a><span class="co">#&gt; 196 36.7598620</span></span>
+<span id="cb3-223"><a href="#cb3-223" tabindex="-1"></a><span class="co">#&gt; 197 33.0755335</span></span>
+<span id="cb3-224"><a href="#cb3-224" tabindex="-1"></a><span class="co">#&gt; 198 29.2745395</span></span>
+<span id="cb3-225"><a href="#cb3-225" tabindex="-1"></a><span class="co">#&gt; 199 31.3893415</span></span>
+<span id="cb3-226"><a href="#cb3-226" tabindex="-1"></a><span class="co">#&gt; 200 31.1901071</span></span>
+<span id="cb3-227"><a href="#cb3-227" tabindex="-1"></a><span class="co">#&gt; 201 32.0701332</span></span>
+<span id="cb3-228"><a href="#cb3-228" tabindex="-1"></a><span class="co">#&gt; 202 25.2441338</span></span>
+<span id="cb3-229"><a href="#cb3-229" tabindex="-1"></a><span class="co">#&gt; 203 35.3292324</span></span>
+<span id="cb3-230"><a href="#cb3-230" tabindex="-1"></a><span class="co">#&gt; 204 36.1126299</span></span>
+<span id="cb3-231"><a href="#cb3-231" tabindex="-1"></a><span class="co">#&gt; 205 37.6220675</span></span>
+<span id="cb3-232"><a href="#cb3-232" tabindex="-1"></a><span class="co">#&gt; 206 21.6779015</span></span>
+<span id="cb3-233"><a href="#cb3-233" tabindex="-1"></a><span class="co">#&gt; 207 23.8158906</span></span>
+<span id="cb3-234"><a href="#cb3-234" tabindex="-1"></a><span class="co">#&gt; 208 16.5443952</span></span>
+<span id="cb3-235"><a href="#cb3-235" tabindex="-1"></a><span class="co">#&gt; 209 20.1357252</span></span>
+<span id="cb3-236"><a href="#cb3-236" tabindex="-1"></a><span class="co">#&gt; 210 11.1134791</span></span>
+<span id="cb3-237"><a href="#cb3-237" tabindex="-1"></a><span class="co">#&gt; 211 17.9442736</span></span>
+<span id="cb3-238"><a href="#cb3-238" tabindex="-1"></a><span class="co">#&gt; 212 10.8493985</span></span>
+<span id="cb3-239"><a href="#cb3-239" tabindex="-1"></a><span class="co">#&gt; 213 17.9609103</span></span>
+<span id="cb3-240"><a href="#cb3-240" tabindex="-1"></a><span class="co">#&gt; 214 25.0782473</span></span>
+<span id="cb3-241"><a href="#cb3-241" tabindex="-1"></a><span class="co">#&gt; 215  7.3365127</span></span>
+<span id="cb3-242"><a href="#cb3-242" tabindex="-1"></a><span class="co">#&gt; 216 24.0439484</span></span>
+<span id="cb3-243"><a href="#cb3-243" tabindex="-1"></a><span class="co">#&gt; 217 19.9785303</span></span>
+<span id="cb3-244"><a href="#cb3-244" tabindex="-1"></a><span class="co">#&gt; 218 26.2319228</span></span>
+<span id="cb3-245"><a href="#cb3-245" tabindex="-1"></a><span class="co">#&gt; 219 17.4840523</span></span>
+<span id="cb3-246"><a href="#cb3-246" tabindex="-1"></a><span class="co">#&gt; 220 24.3536208</span></span>
+<span id="cb3-247"><a href="#cb3-247" tabindex="-1"></a><span class="co">#&gt; 221 27.7831898</span></span>
+<span id="cb3-248"><a href="#cb3-248" tabindex="-1"></a><span class="co">#&gt; 222 16.3038262</span></span>
+<span id="cb3-249"><a href="#cb3-249" tabindex="-1"></a><span class="co">#&gt; 223 27.2784077</span></span>
+<span id="cb3-250"><a href="#cb3-250" tabindex="-1"></a><span class="co">#&gt; 224 27.4437594</span></span>
+<span id="cb3-251"><a href="#cb3-251" tabindex="-1"></a><span class="co">#&gt; 225 37.9925360</span></span>
+<span id="cb3-252"><a href="#cb3-252" tabindex="-1"></a><span class="co">#&gt; 226 40.0032026</span></span>
+<span id="cb3-253"><a href="#cb3-253" tabindex="-1"></a><span class="co">#&gt; 227 37.4929496</span></span>
+<span id="cb3-254"><a href="#cb3-254" tabindex="-1"></a><span class="co">#&gt; 228 30.9933738</span></span>
+<span id="cb3-255"><a href="#cb3-255" tabindex="-1"></a><span class="co">#&gt; 229 35.1971728</span></span>
+<span id="cb3-256"><a href="#cb3-256" tabindex="-1"></a><span class="co">#&gt; 230 29.5594215</span></span>
+<span id="cb3-257"><a href="#cb3-257" tabindex="-1"></a><span class="co">#&gt; 231 21.6358425</span></span>
+<span id="cb3-258"><a href="#cb3-258" tabindex="-1"></a><span class="co">#&gt; 232 32.9618292</span></span>
+<span id="cb3-259"><a href="#cb3-259" tabindex="-1"></a><span class="co">#&gt; 233 39.4172833</span></span>
+<span id="cb3-260"><a href="#cb3-260" tabindex="-1"></a><span class="co">#&gt; 234 38.0175765</span></span>
+<span id="cb3-261"><a href="#cb3-261" tabindex="-1"></a><span class="co">#&gt; 235 27.7033320</span></span>
+<span id="cb3-262"><a href="#cb3-262" tabindex="-1"></a><span class="co">#&gt; 236 22.6585287</span></span>
+<span id="cb3-263"><a href="#cb3-263" tabindex="-1"></a><span class="co">#&gt; 237 26.2719380</span></span>
+<span id="cb3-264"><a href="#cb3-264" tabindex="-1"></a><span class="co">#&gt; 238 33.0202380</span></span>
+<span id="cb3-265"><a href="#cb3-265" tabindex="-1"></a><span class="co">#&gt; 239 27.5413813</span></span>
+<span id="cb3-266"><a href="#cb3-266" tabindex="-1"></a><span class="co">#&gt; 240 27.5297489</span></span>
+<span id="cb3-267"><a href="#cb3-267" tabindex="-1"></a><span class="co">#&gt; 241 26.4444893</span></span>
+<span id="cb3-268"><a href="#cb3-268" tabindex="-1"></a><span class="co">#&gt; 242 21.7343997</span></span>
+<span id="cb3-269"><a href="#cb3-269" tabindex="-1"></a><span class="co">#&gt; 243 23.8183736</span></span>
+<span id="cb3-270"><a href="#cb3-270" tabindex="-1"></a><span class="co">#&gt; 244 27.8423638</span></span>
+<span id="cb3-271"><a href="#cb3-271" tabindex="-1"></a><span class="co">#&gt; 245 19.1296953</span></span>
+<span id="cb3-272"><a href="#cb3-272" tabindex="-1"></a><span class="co">#&gt; 246 15.3882555</span></span>
+<span id="cb3-273"><a href="#cb3-273" tabindex="-1"></a><span class="co">#&gt; 247 23.8671563</span></span>
+<span id="cb3-274"><a href="#cb3-274" tabindex="-1"></a><span class="co">#&gt; 248 23.8328519</span></span>
+<span id="cb3-275"><a href="#cb3-275" tabindex="-1"></a><span class="co">#&gt; 249 25.2825056</span></span>
+<span id="cb3-276"><a href="#cb3-276" tabindex="-1"></a><span class="co">#&gt; 250 28.6133841</span></span>
+<span id="cb3-277"><a href="#cb3-277" tabindex="-1"></a><span class="co">#&gt; 251 27.8652075</span></span>
+<span id="cb3-278"><a href="#cb3-278" tabindex="-1"></a><span class="co">#&gt; 252 29.0908537</span></span>
+<span id="cb3-279"><a href="#cb3-279" tabindex="-1"></a><span class="co">#&gt; 253 31.7560868</span></span>
+<span id="cb3-280"><a href="#cb3-280" tabindex="-1"></a><span class="co">#&gt; 254 38.3398747</span></span>
+<span id="cb3-281"><a href="#cb3-281" tabindex="-1"></a><span class="co">#&gt; 255 25.5194454</span></span>
+<span id="cb3-282"><a href="#cb3-282" tabindex="-1"></a><span class="co">#&gt; 256 22.6354560</span></span>
+<span id="cb3-283"><a href="#cb3-283" tabindex="-1"></a><span class="co">#&gt; 257 34.5396271</span></span>
+<span id="cb3-284"><a href="#cb3-284" tabindex="-1"></a><span class="co">#&gt; 258 39.5843143</span></span>
+<span id="cb3-285"><a href="#cb3-285" tabindex="-1"></a><span class="co">#&gt; 259 30.9415734</span></span>
+<span id="cb3-286"><a href="#cb3-286" tabindex="-1"></a><span class="co">#&gt; 260 29.0241163</span></span>
+<span id="cb3-287"><a href="#cb3-287" tabindex="-1"></a><span class="co">#&gt; 261 29.1352600</span></span>
+<span id="cb3-288"><a href="#cb3-288" tabindex="-1"></a><span class="co">#&gt; 262 32.2262007</span></span>
+<span id="cb3-289"><a href="#cb3-289" tabindex="-1"></a><span class="co">#&gt; 263 37.5314931</span></span>
+<span id="cb3-290"><a href="#cb3-290" tabindex="-1"></a><span class="co">#&gt; 264 28.7038989</span></span>
+<span id="cb3-291"><a href="#cb3-291" tabindex="-1"></a><span class="co">#&gt; 265 30.1009894</span></span>
+<span id="cb3-292"><a href="#cb3-292" tabindex="-1"></a><span class="co">#&gt; 266 20.2704598</span></span>
+<span id="cb3-293"><a href="#cb3-293" tabindex="-1"></a><span class="co">#&gt; 267 24.8612856</span></span>
+<span id="cb3-294"><a href="#cb3-294" tabindex="-1"></a><span class="co">#&gt; 268 36.0442116</span></span>
+<span id="cb3-295"><a href="#cb3-295" tabindex="-1"></a><span class="co">#&gt; 269 34.5887148</span></span>
+<span id="cb3-296"><a href="#cb3-296" tabindex="-1"></a><span class="co">#&gt; 270 20.0511877</span></span>
+<span id="cb3-297"><a href="#cb3-297" tabindex="-1"></a><span class="co">#&gt; 271 20.1419142</span></span>
+<span id="cb3-298"><a href="#cb3-298" tabindex="-1"></a><span class="co">#&gt; 272 26.1748140</span></span>
+<span id="cb3-299"><a href="#cb3-299" tabindex="-1"></a><span class="co">#&gt; 273 26.9559002</span></span>
+<span id="cb3-300"><a href="#cb3-300" tabindex="-1"></a><span class="co">#&gt; 274 33.5255352</span></span>
+<span id="cb3-301"><a href="#cb3-301" tabindex="-1"></a><span class="co">#&gt; 275 30.7488338</span></span>
+<span id="cb3-302"><a href="#cb3-302" tabindex="-1"></a><span class="co">#&gt; 276 31.5856170</span></span>
+<span id="cb3-303"><a href="#cb3-303" tabindex="-1"></a><span class="co">#&gt; 277 31.7175416</span></span>
+<span id="cb3-304"><a href="#cb3-304" tabindex="-1"></a><span class="co">#&gt; 278 30.6911126</span></span>
+<span id="cb3-305"><a href="#cb3-305" tabindex="-1"></a><span class="co">#&gt; 279 27.0169449</span></span>
+<span id="cb3-306"><a href="#cb3-306" tabindex="-1"></a><span class="co">#&gt; 280 30.1800655</span></span>
+<span id="cb3-307"><a href="#cb3-307" tabindex="-1"></a><span class="co">#&gt; 281 35.9774955</span></span>
+<span id="cb3-308"><a href="#cb3-308" tabindex="-1"></a><span class="co">#&gt; 282 31.1355377</span></span>
+<span id="cb3-309"><a href="#cb3-309" tabindex="-1"></a><span class="co">#&gt; 283 35.5701824</span></span>
+<span id="cb3-310"><a href="#cb3-310" tabindex="-1"></a><span class="co">#&gt; 284 36.8816071</span></span>
+<span id="cb3-311"><a href="#cb3-311" tabindex="-1"></a><span class="co">#&gt; 285 29.6632112</span></span>
+<span id="cb3-312"><a href="#cb3-312" tabindex="-1"></a><span class="co">#&gt; 286 26.2066918</span></span>
+<span id="cb3-313"><a href="#cb3-313" tabindex="-1"></a><span class="co">#&gt; 287 22.0795988</span></span>
+<span id="cb3-314"><a href="#cb3-314" tabindex="-1"></a><span class="co">#&gt; 288 25.6670330</span></span>
+<span id="cb3-315"><a href="#cb3-315" tabindex="-1"></a><span class="co">#&gt; 289 25.9101030</span></span>
+<span id="cb3-316"><a href="#cb3-316" tabindex="-1"></a><span class="co">#&gt; 290 25.9570127</span></span>
+<span id="cb3-317"><a href="#cb3-317" tabindex="-1"></a><span class="co">#&gt; 291 31.3977657</span></span>
+<span id="cb3-318"><a href="#cb3-318" tabindex="-1"></a><span class="co">#&gt; 292 32.7037086</span></span>
+<span id="cb3-319"><a href="#cb3-319" tabindex="-1"></a><span class="co">#&gt; 293 29.3545517</span></span>
+<span id="cb3-320"><a href="#cb3-320" tabindex="-1"></a><span class="co">#&gt; 294 24.3333369</span></span>
+<span id="cb3-321"><a href="#cb3-321" tabindex="-1"></a><span class="co">#&gt; 295 22.5750033</span></span>
+<span id="cb3-322"><a href="#cb3-322" tabindex="-1"></a><span class="co">#&gt; 296 28.5959266</span></span>
+<span id="cb3-323"><a href="#cb3-323" tabindex="-1"></a><span class="co">#&gt; 297 27.2284803</span></span>
+<span id="cb3-324"><a href="#cb3-324" tabindex="-1"></a><span class="co">#&gt; 298 17.9960740</span></span>
+<span id="cb3-325"><a href="#cb3-325" tabindex="-1"></a><span class="co">#&gt; 299 27.7397572</span></span>
+<span id="cb3-326"><a href="#cb3-326" tabindex="-1"></a><span class="co">#&gt; 300 31.4093400</span></span>
+<span id="cb3-327"><a href="#cb3-327" tabindex="-1"></a><span class="co">#&gt; 301 29.7003999</span></span>
+<span id="cb3-328"><a href="#cb3-328" tabindex="-1"></a><span class="co">#&gt; 302 26.0899315</span></span>
+<span id="cb3-329"><a href="#cb3-329" tabindex="-1"></a><span class="co">#&gt; 303 26.1385801</span></span>
+<span id="cb3-330"><a href="#cb3-330" tabindex="-1"></a><span class="co">#&gt; 304 31.0341533</span></span>
+<span id="cb3-331"><a href="#cb3-331" tabindex="-1"></a><span class="co">#&gt; 305 30.9992374</span></span>
+<span id="cb3-332"><a href="#cb3-332" tabindex="-1"></a><span class="co">#&gt; 306 26.5851635</span></span>
+<span id="cb3-333"><a href="#cb3-333" tabindex="-1"></a><span class="co">#&gt; 307 32.2240235</span></span>
+<span id="cb3-334"><a href="#cb3-334" tabindex="-1"></a><span class="co">#&gt; 308 28.6576392</span></span>
+<span id="cb3-335"><a href="#cb3-335" tabindex="-1"></a><span class="co">#&gt; 309 29.4819315</span></span>
+<span id="cb3-336"><a href="#cb3-336" tabindex="-1"></a><span class="co">#&gt; 310 22.6620434</span></span>
+<span id="cb3-337"><a href="#cb3-337" tabindex="-1"></a><span class="co">#&gt; 311 15.9022074</span></span>
+<span id="cb3-338"><a href="#cb3-338" tabindex="-1"></a><span class="co">#&gt; 312 25.9666976</span></span>
+<span id="cb3-339"><a href="#cb3-339" tabindex="-1"></a><span class="co">#&gt; 313 21.8037721</span></span>
+<span id="cb3-340"><a href="#cb3-340" tabindex="-1"></a><span class="co">#&gt; 314 25.4707011</span></span>
+<span id="cb3-341"><a href="#cb3-341" tabindex="-1"></a><span class="co">#&gt; 315 26.1138642</span></span>
+<span id="cb3-342"><a href="#cb3-342" tabindex="-1"></a><span class="co">#&gt; 316 20.3345409</span></span>
+<span id="cb3-343"><a href="#cb3-343" tabindex="-1"></a><span class="co">#&gt; 317 17.0352148</span></span>
+<span id="cb3-344"><a href="#cb3-344" tabindex="-1"></a><span class="co">#&gt; 318 17.8917864</span></span>
+<span id="cb3-345"><a href="#cb3-345" tabindex="-1"></a><span class="co">#&gt; 319 24.4884879</span></span>
+<span id="cb3-346"><a href="#cb3-346" tabindex="-1"></a><span class="co">#&gt; 320 21.6149847</span></span>
+<span id="cb3-347"><a href="#cb3-347" tabindex="-1"></a><span class="co">#&gt; 321 26.7271173</span></span>
+<span id="cb3-348"><a href="#cb3-348" tabindex="-1"></a><span class="co">#&gt; 322 26.6845620</span></span>
+<span id="cb3-349"><a href="#cb3-349" tabindex="-1"></a><span class="co">#&gt; 323 24.4594372</span></span>
+<span id="cb3-350"><a href="#cb3-350" tabindex="-1"></a><span class="co">#&gt; 324 20.1966177</span></span>
+<span id="cb3-351"><a href="#cb3-351" tabindex="-1"></a><span class="co">#&gt; 325 27.3604254</span></span>
+<span id="cb3-352"><a href="#cb3-352" tabindex="-1"></a><span class="co">#&gt; 326 28.1048780</span></span>
+<span id="cb3-353"><a href="#cb3-353" tabindex="-1"></a><span class="co">#&gt; 327 26.8199449</span></span>
+<span id="cb3-354"><a href="#cb3-354" tabindex="-1"></a><span class="co">#&gt; 328 21.4248605</span></span>
+<span id="cb3-355"><a href="#cb3-355" tabindex="-1"></a><span class="co">#&gt; 329 22.1356399</span></span>
+<span id="cb3-356"><a href="#cb3-356" tabindex="-1"></a><span class="co">#&gt; 330 26.1670781</span></span>
+<span id="cb3-357"><a href="#cb3-357" tabindex="-1"></a><span class="co">#&gt; 331 24.0940294</span></span>
+<span id="cb3-358"><a href="#cb3-358" tabindex="-1"></a><span class="co">#&gt; 332 19.7463095</span></span>
+<span id="cb3-359"><a href="#cb3-359" tabindex="-1"></a><span class="co">#&gt; 333 24.3258880</span></span>
+<span id="cb3-360"><a href="#cb3-360" tabindex="-1"></a><span class="co">#&gt; 334 27.1400275</span></span>
+<span id="cb3-361"><a href="#cb3-361" tabindex="-1"></a><span class="co">#&gt; 335 26.4270521</span></span>
+<span id="cb3-362"><a href="#cb3-362" tabindex="-1"></a><span class="co">#&gt; 336 24.2414265</span></span>
+<span id="cb3-363"><a href="#cb3-363" tabindex="-1"></a><span class="co">#&gt; 337 22.2491528</span></span>
+<span id="cb3-364"><a href="#cb3-364" tabindex="-1"></a><span class="co">#&gt; 338 21.8959122</span></span>
+<span id="cb3-365"><a href="#cb3-365" tabindex="-1"></a><span class="co">#&gt; 339 24.0338064</span></span>
+<span id="cb3-366"><a href="#cb3-366" tabindex="-1"></a><span class="co">#&gt; 340 22.8745722</span></span>
+<span id="cb3-367"><a href="#cb3-367" tabindex="-1"></a><span class="co">#&gt; 341 23.0756027</span></span>
+<span id="cb3-368"><a href="#cb3-368" tabindex="-1"></a><span class="co">#&gt; 342 31.9431924</span></span>
+<span id="cb3-369"><a href="#cb3-369" tabindex="-1"></a><span class="co">#&gt; 343 26.3791099</span></span>
+<span id="cb3-370"><a href="#cb3-370" tabindex="-1"></a><span class="co">#&gt; 344 28.1065009</span></span>
+<span id="cb3-371"><a href="#cb3-371" tabindex="-1"></a><span class="co">#&gt; 345 30.6469908</span></span>
+<span id="cb3-372"><a href="#cb3-372" tabindex="-1"></a><span class="co">#&gt; 346 22.5173778</span></span>
+<span id="cb3-373"><a href="#cb3-373" tabindex="-1"></a><span class="co">#&gt; 347 20.5650235</span></span>
+<span id="cb3-374"><a href="#cb3-374" tabindex="-1"></a><span class="co">#&gt; 348 27.7185364</span></span>
+<span id="cb3-375"><a href="#cb3-375" tabindex="-1"></a><span class="co">#&gt; 349 28.5569048</span></span>
+<span id="cb3-376"><a href="#cb3-376" tabindex="-1"></a><span class="co">#&gt; 350 30.1594178</span></span>
+<span id="cb3-377"><a href="#cb3-377" tabindex="-1"></a><span class="co">#&gt; 351 27.8293563</span></span>
+<span id="cb3-378"><a href="#cb3-378" tabindex="-1"></a><span class="co">#&gt; 352 28.5924314</span></span>
+<span id="cb3-379"><a href="#cb3-379" tabindex="-1"></a><span class="co">#&gt; 353 23.6073548</span></span>
+<span id="cb3-380"><a href="#cb3-380" tabindex="-1"></a><span class="co">#&gt; 354 29.9781757</span></span>
+<span id="cb3-381"><a href="#cb3-381" tabindex="-1"></a><span class="co">#&gt; 355 22.3228804</span></span>
+<span id="cb3-382"><a href="#cb3-382" tabindex="-1"></a><span class="co">#&gt; 356 25.2868044</span></span>
+<span id="cb3-383"><a href="#cb3-383" tabindex="-1"></a><span class="co">#&gt; 357 19.0092665</span></span>
+<span id="cb3-384"><a href="#cb3-384" tabindex="-1"></a><span class="co">#&gt; 358 22.6978554</span></span>
+<span id="cb3-385"><a href="#cb3-385" tabindex="-1"></a><span class="co">#&gt; 359 22.4832835</span></span>
+<span id="cb3-386"><a href="#cb3-386" tabindex="-1"></a><span class="co">#&gt; 360 21.6482001</span></span>
+<span id="cb3-387"><a href="#cb3-387" tabindex="-1"></a><span class="co">#&gt; 361 26.2090031</span></span>
+<span id="cb3-388"><a href="#cb3-388" tabindex="-1"></a><span class="co">#&gt; 362 21.3820755</span></span>
+<span id="cb3-389"><a href="#cb3-389" tabindex="-1"></a><span class="co">#&gt; 363 19.4341353</span></span>
+<span id="cb3-390"><a href="#cb3-390" tabindex="-1"></a><span class="co">#&gt; 364 18.8274137</span></span>
+<span id="cb3-391"><a href="#cb3-391" tabindex="-1"></a><span class="co">#&gt; 365 39.8605424</span></span>
+<span id="cb3-392"><a href="#cb3-392" tabindex="-1"></a><span class="co">#&gt; 366 12.2767480</span></span>
+<span id="cb3-393"><a href="#cb3-393" tabindex="-1"></a><span class="co">#&gt; 367 14.9839805</span></span>
+<span id="cb3-394"><a href="#cb3-394" tabindex="-1"></a><span class="co">#&gt; 368  9.8436768</span></span>
+<span id="cb3-395"><a href="#cb3-395" tabindex="-1"></a><span class="co">#&gt; 369 21.8709885</span></span>
+<span id="cb3-396"><a href="#cb3-396" tabindex="-1"></a><span class="co">#&gt; 370 30.2416260</span></span>
+<span id="cb3-397"><a href="#cb3-397" tabindex="-1"></a><span class="co">#&gt; 371 32.4183507</span></span>
+<span id="cb3-398"><a href="#cb3-398" tabindex="-1"></a><span class="co">#&gt; 372 24.1777649</span></span>
+<span id="cb3-399"><a href="#cb3-399" tabindex="-1"></a><span class="co">#&gt; 373 22.8664358</span></span>
+<span id="cb3-400"><a href="#cb3-400" tabindex="-1"></a><span class="co">#&gt; 374  1.4452609</span></span>
+<span id="cb3-401"><a href="#cb3-401" tabindex="-1"></a><span class="co">#&gt; 375 -4.4834651</span></span>
+<span id="cb3-402"><a href="#cb3-402" tabindex="-1"></a><span class="co">#&gt; 376 27.2359276</span></span>
+<span id="cb3-403"><a href="#cb3-403" tabindex="-1"></a><span class="co">#&gt; 377 17.6231389</span></span>
+<span id="cb3-404"><a href="#cb3-404" tabindex="-1"></a><span class="co">#&gt; 378 19.6329658</span></span>
+<span id="cb3-405"><a href="#cb3-405" tabindex="-1"></a><span class="co">#&gt; 379 15.9744986</span></span>
+<span id="cb3-406"><a href="#cb3-406" tabindex="-1"></a><span class="co">#&gt; 380 16.3983152</span></span>
+<span id="cb3-407"><a href="#cb3-407" tabindex="-1"></a><span class="co">#&gt; 381 23.0846157</span></span>
+<span id="cb3-408"><a href="#cb3-408" tabindex="-1"></a><span class="co">#&gt; 382 18.4747061</span></span>
+<span id="cb3-409"><a href="#cb3-409" tabindex="-1"></a><span class="co">#&gt; 383 11.7599468</span></span>
+<span id="cb3-410"><a href="#cb3-410" tabindex="-1"></a><span class="co">#&gt; 384 11.0665302</span></span>
+<span id="cb3-411"><a href="#cb3-411" tabindex="-1"></a><span class="co">#&gt; 385  1.3632455</span></span>
+<span id="cb3-412"><a href="#cb3-412" tabindex="-1"></a><span class="co">#&gt; 386  5.8493841</span></span>
+<span id="cb3-413"><a href="#cb3-413" tabindex="-1"></a><span class="co">#&gt; 387  4.2999133</span></span>
+<span id="cb3-414"><a href="#cb3-414" tabindex="-1"></a><span class="co">#&gt; 388  3.6945481</span></span>
+<span id="cb3-415"><a href="#cb3-415" tabindex="-1"></a><span class="co">#&gt; 389  3.9611502</span></span>
+<span id="cb3-416"><a href="#cb3-416" tabindex="-1"></a><span class="co">#&gt; 390 12.7753182</span></span>
+<span id="cb3-417"><a href="#cb3-417" tabindex="-1"></a><span class="co">#&gt; 391 16.7961371</span></span>
+<span id="cb3-418"><a href="#cb3-418" tabindex="-1"></a><span class="co">#&gt; 392 17.4543320</span></span>
+<span id="cb3-419"><a href="#cb3-419" tabindex="-1"></a><span class="co">#&gt; 393  7.9022257</span></span>
+<span id="cb3-420"><a href="#cb3-420" tabindex="-1"></a><span class="co">#&gt; 394 20.4633138</span></span>
+<span id="cb3-421"><a href="#cb3-421" tabindex="-1"></a><span class="co">#&gt; 395 18.1616923</span></span>
+<span id="cb3-422"><a href="#cb3-422" tabindex="-1"></a><span class="co">#&gt; 396 20.6264296</span></span>
+<span id="cb3-423"><a href="#cb3-423" tabindex="-1"></a><span class="co">#&gt; 397 18.8569795</span></span>
+<span id="cb3-424"><a href="#cb3-424" tabindex="-1"></a><span class="co">#&gt; 398 15.1755926</span></span>
+<span id="cb3-425"><a href="#cb3-425" tabindex="-1"></a><span class="co">#&gt; 399  6.8805697</span></span>
+<span id="cb3-426"><a href="#cb3-426" tabindex="-1"></a><span class="co">#&gt; 400  9.2956658</span></span>
+<span id="cb3-427"><a href="#cb3-427" tabindex="-1"></a><span class="co">#&gt; 401 12.0204163</span></span>
+<span id="cb3-428"><a href="#cb3-428" tabindex="-1"></a><span class="co">#&gt; 402 17.9371101</span></span>
+<span id="cb3-429"><a href="#cb3-429" tabindex="-1"></a><span class="co">#&gt; 403 18.2522455</span></span>
+<span id="cb3-430"><a href="#cb3-430" tabindex="-1"></a><span class="co">#&gt; 404 13.2567792</span></span>
+<span id="cb3-431"><a href="#cb3-431" tabindex="-1"></a><span class="co">#&gt; 405  9.3231901</span></span>
+<span id="cb3-432"><a href="#cb3-432" tabindex="-1"></a><span class="co">#&gt; 406 12.8995267</span></span>
+<span id="cb3-433"><a href="#cb3-433" tabindex="-1"></a><span class="co">#&gt; 407  4.8497353</span></span>
+<span id="cb3-434"><a href="#cb3-434" tabindex="-1"></a><span class="co">#&gt; 408 19.4416602</span></span>
+<span id="cb3-435"><a href="#cb3-435" tabindex="-1"></a><span class="co">#&gt; 409 10.3836758</span></span>
+<span id="cb3-436"><a href="#cb3-436" tabindex="-1"></a><span class="co">#&gt; 410 20.8579432</span></span>
+<span id="cb3-437"><a href="#cb3-437" tabindex="-1"></a><span class="co">#&gt; 411 21.4844924</span></span>
+<span id="cb3-438"><a href="#cb3-438" tabindex="-1"></a><span class="co">#&gt; 412 18.9522893</span></span>
+<span id="cb3-439"><a href="#cb3-439" tabindex="-1"></a><span class="co">#&gt; 413  0.2933235</span></span>
+<span id="cb3-440"><a href="#cb3-440" tabindex="-1"></a><span class="co">#&gt; 414 12.0770698</span></span>
+<span id="cb3-441"><a href="#cb3-441" tabindex="-1"></a><span class="co">#&gt; 415 -1.9234360</span></span>
+<span id="cb3-442"><a href="#cb3-442" tabindex="-1"></a><span class="co">#&gt; 416 12.8284145</span></span>
+<span id="cb3-443"><a href="#cb3-443" tabindex="-1"></a><span class="co">#&gt; 417 16.6695569</span></span>
+<span id="cb3-444"><a href="#cb3-444" tabindex="-1"></a><span class="co">#&gt; 418  8.6462957</span></span>
+<span id="cb3-445"><a href="#cb3-445" tabindex="-1"></a><span class="co">#&gt; 419 15.7919582</span></span>
+<span id="cb3-446"><a href="#cb3-446" tabindex="-1"></a><span class="co">#&gt; 420 18.8278888</span></span>
+<span id="cb3-447"><a href="#cb3-447" tabindex="-1"></a><span class="co">#&gt; 421 21.6624290</span></span>
+<span id="cb3-448"><a href="#cb3-448" tabindex="-1"></a><span class="co">#&gt; 422 19.1786866</span></span>
+<span id="cb3-449"><a href="#cb3-449" tabindex="-1"></a><span class="co">#&gt; 423 18.3873627</span></span>
+<span id="cb3-450"><a href="#cb3-450" tabindex="-1"></a><span class="co">#&gt; 424 14.8276228</span></span>
+<span id="cb3-451"><a href="#cb3-451" tabindex="-1"></a><span class="co">#&gt; 425 16.0151269</span></span>
+<span id="cb3-452"><a href="#cb3-452" tabindex="-1"></a><span class="co">#&gt; 426 13.0781329</span></span>
+<span id="cb3-453"><a href="#cb3-453" tabindex="-1"></a><span class="co">#&gt; 427 18.3296603</span></span>
+<span id="cb3-454"><a href="#cb3-454" tabindex="-1"></a><span class="co">#&gt; 428 20.9235351</span></span>
+<span id="cb3-455"><a href="#cb3-455" tabindex="-1"></a><span class="co">#&gt; 429 16.4123348</span></span>
+<span id="cb3-456"><a href="#cb3-456" tabindex="-1"></a><span class="co">#&gt; 430 15.7256983</span></span>
+<span id="cb3-457"><a href="#cb3-457" tabindex="-1"></a><span class="co">#&gt; 431 19.6721224</span></span>
+<span id="cb3-458"><a href="#cb3-458" tabindex="-1"></a><span class="co">#&gt; 432 20.8191887</span></span>
+<span id="cb3-459"><a href="#cb3-459" tabindex="-1"></a><span class="co">#&gt; 433 23.6407599</span></span>
+<span id="cb3-460"><a href="#cb3-460" tabindex="-1"></a><span class="co">#&gt; 434 21.0234290</span></span>
+<span id="cb3-461"><a href="#cb3-461" tabindex="-1"></a><span class="co">#&gt; 435 20.5392374</span></span>
+<span id="cb3-462"><a href="#cb3-462" tabindex="-1"></a><span class="co">#&gt; 436 17.5027689</span></span>
+<span id="cb3-463"><a href="#cb3-463" tabindex="-1"></a><span class="co">#&gt; 437 19.9825209</span></span>
+<span id="cb3-464"><a href="#cb3-464" tabindex="-1"></a><span class="co">#&gt; 438 13.0597196</span></span>
+<span id="cb3-465"><a href="#cb3-465" tabindex="-1"></a><span class="co">#&gt; 439  7.1320811</span></span>
+<span id="cb3-466"><a href="#cb3-466" tabindex="-1"></a><span class="co">#&gt; 440 12.6798735</span></span>
+<span id="cb3-467"><a href="#cb3-467" tabindex="-1"></a><span class="co">#&gt; 441 14.1378550</span></span>
+<span id="cb3-468"><a href="#cb3-468" tabindex="-1"></a><span class="co">#&gt; 442 18.7663487</span></span>
+<span id="cb3-469"><a href="#cb3-469" tabindex="-1"></a><span class="co">#&gt; 443 19.6890265</span></span>
+<span id="cb3-470"><a href="#cb3-470" tabindex="-1"></a><span class="co">#&gt; 444 19.5936390</span></span>
+<span id="cb3-471"><a href="#cb3-471" tabindex="-1"></a><span class="co">#&gt; 445 13.2483165</span></span>
+<span id="cb3-472"><a href="#cb3-472" tabindex="-1"></a><span class="co">#&gt; 446 16.1893575</span></span>
+<span id="cb3-473"><a href="#cb3-473" tabindex="-1"></a><span class="co">#&gt; 447 19.5409990</span></span>
+<span id="cb3-474"><a href="#cb3-474" tabindex="-1"></a><span class="co">#&gt; 448 19.9466892</span></span>
+<span id="cb3-475"><a href="#cb3-475" tabindex="-1"></a><span class="co">#&gt; 449 18.5344909</span></span>
+<span id="cb3-476"><a href="#cb3-476" tabindex="-1"></a><span class="co">#&gt; 450 18.9559954</span></span>
+<span id="cb3-477"><a href="#cb3-477" tabindex="-1"></a><span class="co">#&gt; 451 21.8294029</span></span>
+<span id="cb3-478"><a href="#cb3-478" tabindex="-1"></a><span class="co">#&gt; 452 21.1686097</span></span>
+<span id="cb3-479"><a href="#cb3-479" tabindex="-1"></a><span class="co">#&gt; 453 19.6500235</span></span>
+<span id="cb3-480"><a href="#cb3-480" tabindex="-1"></a><span class="co">#&gt; 454 25.5356202</span></span>
+<span id="cb3-481"><a href="#cb3-481" tabindex="-1"></a><span class="co">#&gt; 455 20.9129141</span></span>
+<span id="cb3-482"><a href="#cb3-482" tabindex="-1"></a><span class="co">#&gt; 456 20.2554255</span></span>
+<span id="cb3-483"><a href="#cb3-483" tabindex="-1"></a><span class="co">#&gt; 457 16.9152267</span></span>
+<span id="cb3-484"><a href="#cb3-484" tabindex="-1"></a><span class="co">#&gt; 458 18.0333192</span></span>
+<span id="cb3-485"><a href="#cb3-485" tabindex="-1"></a><span class="co">#&gt; 459 20.3337372</span></span>
+<span id="cb3-486"><a href="#cb3-486" tabindex="-1"></a><span class="co">#&gt; 460 20.1962539</span></span>
+<span id="cb3-487"><a href="#cb3-487" tabindex="-1"></a><span class="co">#&gt; 461 22.2371559</span></span>
+<span id="cb3-488"><a href="#cb3-488" tabindex="-1"></a><span class="co">#&gt; 462 21.7213153</span></span>
+<span id="cb3-489"><a href="#cb3-489" tabindex="-1"></a><span class="co">#&gt; 463 21.8437292</span></span>
+<span id="cb3-490"><a href="#cb3-490" tabindex="-1"></a><span class="co">#&gt; 464 25.1962103</span></span>
+<span id="cb3-491"><a href="#cb3-491" tabindex="-1"></a><span class="co">#&gt; 465 21.7883004</span></span>
+<span id="cb3-492"><a href="#cb3-492" tabindex="-1"></a><span class="co">#&gt; 466 18.9300588</span></span>
+<span id="cb3-493"><a href="#cb3-493" tabindex="-1"></a><span class="co">#&gt; 467 17.9803349</span></span>
+<span id="cb3-494"><a href="#cb3-494" tabindex="-1"></a><span class="co">#&gt; 468 15.5782260</span></span>
+<span id="cb3-495"><a href="#cb3-495" tabindex="-1"></a><span class="co">#&gt; 469 17.2235436</span></span>
+<span id="cb3-496"><a href="#cb3-496" tabindex="-1"></a><span class="co">#&gt; 470 18.2953183</span></span>
+<span id="cb3-497"><a href="#cb3-497" tabindex="-1"></a><span class="co">#&gt; 471 19.6172096</span></span>
+<span id="cb3-498"><a href="#cb3-498" tabindex="-1"></a><span class="co">#&gt; 472 22.1128142</span></span>
+<span id="cb3-499"><a href="#cb3-499" tabindex="-1"></a><span class="co">#&gt; 473 22.2150766</span></span>
+<span id="cb3-500"><a href="#cb3-500" tabindex="-1"></a><span class="co">#&gt; 474 26.6859739</span></span>
+<span id="cb3-501"><a href="#cb3-501" tabindex="-1"></a><span class="co">#&gt; 475 14.6914394</span></span>
+<span id="cb3-502"><a href="#cb3-502" tabindex="-1"></a><span class="co">#&gt; 476 14.6095165</span></span>
+<span id="cb3-503"><a href="#cb3-503" tabindex="-1"></a><span class="co">#&gt; 477 19.6970289</span></span>
+<span id="cb3-504"><a href="#cb3-504" tabindex="-1"></a><span class="co">#&gt; 478  9.7499483</span></span>
+<span id="cb3-505"><a href="#cb3-505" tabindex="-1"></a><span class="co">#&gt; 479 18.5982858</span></span>
+<span id="cb3-506"><a href="#cb3-506" tabindex="-1"></a><span class="co">#&gt; 480 21.9597063</span></span>
+<span id="cb3-507"><a href="#cb3-507" tabindex="-1"></a><span class="co">#&gt; 481 23.5374469</span></span>
+<span id="cb3-508"><a href="#cb3-508" tabindex="-1"></a><span class="co">#&gt; 482 28.0225741</span></span>
+<span id="cb3-509"><a href="#cb3-509" tabindex="-1"></a><span class="co">#&gt; 483 30.0624262</span></span>
+<span id="cb3-510"><a href="#cb3-510" tabindex="-1"></a><span class="co">#&gt; 484 21.3120359</span></span>
+<span id="cb3-511"><a href="#cb3-511" tabindex="-1"></a><span class="co">#&gt; 485 20.0009350</span></span>
+<span id="cb3-512"><a href="#cb3-512" tabindex="-1"></a><span class="co">#&gt; 486 23.9938289</span></span>
+<span id="cb3-513"><a href="#cb3-513" tabindex="-1"></a><span class="co">#&gt; 487 20.1846600</span></span>
+<span id="cb3-514"><a href="#cb3-514" tabindex="-1"></a><span class="co">#&gt; 488 21.3787529</span></span>
+<span id="cb3-515"><a href="#cb3-515" tabindex="-1"></a><span class="co">#&gt; 489 14.8791378</span></span>
+<span id="cb3-516"><a href="#cb3-516" tabindex="-1"></a><span class="co">#&gt; 490 10.9063937</span></span>
+<span id="cb3-517"><a href="#cb3-517" tabindex="-1"></a><span class="co">#&gt; 491  5.6389376</span></span>
+<span id="cb3-518"><a href="#cb3-518" tabindex="-1"></a><span class="co">#&gt; 492 17.5503302</span></span>
+<span id="cb3-519"><a href="#cb3-519" tabindex="-1"></a><span class="co">#&gt; 493 20.5614516</span></span>
+<span id="cb3-520"><a href="#cb3-520" tabindex="-1"></a><span class="co">#&gt; 494 20.0193098</span></span>
+<span id="cb3-521"><a href="#cb3-521" tabindex="-1"></a><span class="co">#&gt; 495 20.1198341</span></span>
+<span id="cb3-522"><a href="#cb3-522" tabindex="-1"></a><span class="co">#&gt; 496 16.2658942</span></span>
+<span id="cb3-523"><a href="#cb3-523" tabindex="-1"></a><span class="co">#&gt; 497 12.5903129</span></span>
+<span id="cb3-524"><a href="#cb3-524" tabindex="-1"></a><span class="co">#&gt; 498 19.1263523</span></span>
+<span id="cb3-525"><a href="#cb3-525" tabindex="-1"></a><span class="co">#&gt; 499 21.0179865</span></span>
+<span id="cb3-526"><a href="#cb3-526" tabindex="-1"></a><span class="co">#&gt; 500 17.3495490</span></span>
+<span id="cb3-527"><a href="#cb3-527" tabindex="-1"></a><span class="co">#&gt; 501 20.1589703</span></span>
+<span id="cb3-528"><a href="#cb3-528" tabindex="-1"></a><span class="co">#&gt; 502 25.9966648</span></span>
+<span id="cb3-529"><a href="#cb3-529" tabindex="-1"></a><span class="co">#&gt; 503 23.9789311</span></span>
+<span id="cb3-530"><a href="#cb3-530" tabindex="-1"></a><span class="co">#&gt; 504 30.5061833</span></span>
+<span id="cb3-531"><a href="#cb3-531" tabindex="-1"></a><span class="co">#&gt; 505 29.0490996</span></span>
+<span id="cb3-532"><a href="#cb3-532" tabindex="-1"></a><span class="co">#&gt; 506 24.2889290</span></span>
+<span id="cb3-533"><a href="#cb3-533" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-534"><a href="#cb3-534" tabindex="-1"></a><span class="co">#&gt; $type</span></span>
+<span id="cb3-535"><a href="#cb3-535" tabindex="-1"></a><span class="co">#&gt; [1] &quot;gaussian&quot;</span></span>
+<span id="cb3-536"><a href="#cb3-536" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-537"><a href="#cb3-537" tabindex="-1"></a><span class="co">#&gt; $names</span></span>
+<span id="cb3-538"><a href="#cb3-538" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Intercept&quot; &quot;lstat&quot;     &quot;rm&quot;</span></span></code></pre></div>
+<p>y: The vector of responses (housing prices). X: The matrix of
+predictors (lstat and rm). type: Specified as “gaussian” indicating that
+the response variable is continuous, suitable for regression analysis.
+baggingformodel: Set to FALSE, indicating that bagging (bootstrap
+aggregation) is not used in this instance. If set to TRUE, the model
+would perform multiple samplings and aggregations to potentially enhance
+performance and robustness.</p>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

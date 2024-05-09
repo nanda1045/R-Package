@@ -1,0 +1,150 @@
+---
+title: "Lasso Model"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Lasso Model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(SimpleEnsembleGroup20)
+```
+
+**The lasso function** constructs a predictive model using L1 regularization (lasso penalty) through the glmnet package. Lasso regularization helps to reduce overfitting by penalizing the absolute size of the regression coefficients, which encourages a sparse model where few parameters are non-zero. This is particularly useful in scenarios where the number of predictors is large compared to the number of observations or in cases of multicollinearity among predictor variables. Optionally, the function supports the implementation of a bagging strategy to enhance the robustness and accuracy of the model by averaging the outcomes from multiple bootstrap samples.
+
+
+
+
+lasso(y, X, regularization_param = NULL, intercept = TRUE, baggingformodels = FALSE, type = "gaussian", R = 100)
+
+
+Parameters:
+y: A vector containing the response variable, which can be either continuous for regression or binary for classification tasks.
+X: A matrix or data frame of predictor variables. Variables can be numeric or categorical but should be appropriately encoded if categorical.
+regularization_param: Optional; a numeric value specifying the regularization strength for the lasso penalty. If NULL, it is determined using cross-validation.
+intercept: Logical; indicates whether an intercept should be included in the model. Defaults to TRUE.
+type: Character string specifying the model type. Accepts 'binomial' for classification tasks or 'gaussian' for regression tasks.
+baggingformodels: Logical; determines whether to employ bootstrap aggregation (bagging) to enhance model performance. Defaults to FALSE.
+R: Integer; specifies the number of bootstrap samples to use if bagging is enabled.
+
+
+```{r}
+#' @title Fit Lasso Model
+#'
+#' @description Constructs a regularized predictive model using the glmnet package, utilizing L1 regularization
+#' (lasso penalty) to balance model complexity and predictive accuracy. This technique addresses multicollinearity
+#' concerns, mitigates overfitting, and encourages sparsity in coefficients, proving advantageous when the
+#' number of predictors outstrips the number of observations. Optionally, a bagging strategy (bootstrap aggregation)
+#' can be employed to bolster model robustness and predictive performance by amalgamating results from multiple
+#' bootstrap samples.
+#'
+#' @param y Response vector, either continuous for regression or binary for classification.
+#' @param X Matrix or data frame of predictor variables, either numeric or categorical.
+#' @param regularization_param Regularization strength parameter for lasso penalty; if NULL, determined via cross-validation.
+#' @param intercept Logical indicating whether to include an intercept term in the model.
+#' @param type A character string specifying the target type: 'binomial' for classification or 'gaussian' for regression.
+#' @param baggingformodels Logical indicating whether to employ bootstrap aggregation (bagging).
+#' @param R Integer specifying the number of bootstrap samples for bagging if enabled.
+#' @return A list containing the regularized predictive model details, or if baggingformodels is enabled, an aggregated
+#' result from multiple bootstrap samples, including the model, regularization parameter value, coefficients,
+#' and predicted values (continuous for gaussian, probabilities for binomial).
+#' @importFrom glmnet glmnet cv.glmnet
+#' @export
+#' @examples
+#' # Example for Gaussian Model (Regression)
+#' data(Boston)
+#' X <- Boston[, c("lstat", "rm")]
+#' y <- Boston$medv
+#' result <- lasso(y = y, X = X, type = "gaussian", baggingformodels = FALSE)
+#' print(result)
+#'
+#' # Example for Binomial Model (Classification)
+#' data(PimaIndiansDiabetes)
+#' X <- PimaIndiansDiabetes[, c("glucose", "BMI")]
+#' y <- PimaIndiansDiabetes$diabetes
+#' result <- lasso(y = y, X = X, type = "binomial", baggingformodels = TRUE, R = 50)
+#' print(result)
+
+lasso <- function(y, X, regularization_param = NULL, intercept = TRUE, baggingformodels = FALSE, type = "gaussian", R = 100) {
+  validate_data(y, X)
+
+  if (!type %in% c("binomial", "gaussian")) {
+    stop("'type' must be either 'binomial' or 'gaussian'")
+  }
+
+  family_spec <- type
+
+  if (is.null(regularization_param)) {
+    res <- cv.glmnet(x = as.matrix(X), y = y, alpha = 1, family = family_spec, intercept = intercept)
+    regularization_param <- res$lambda.min
+  }
+  op <- if (baggingformodels) {
+    perform_bagging(y, X, function(y_sample, X_sample) {
+      fit <- glmnet(x = as.matrix(X_sample), y = y_sample, alpha = 1, lambda = regularization_param, family = family_spec, intercept = intercept)
+      list(coefs = coef(fit), preds = predict(fit, newx = as.matrix(X_sample), type = "response"))
+    }, R)
+  } else {
+    fit <- glmnet(x = as.matrix(X), y = y, alpha = 1, lambda = regularization_param, family = family_spec, intercept = intercept)
+
+    preds <- predict(fit, newx = as.matrix(X), type = "response", s = "lambda.min")
+    coefs <- coef(fit, s = "lambda.min") # Include intercept if intercept is TRUE
+    list(model = fit, regularization_param = regularization_param, coefs = coefs, preds = preds)
+  }
+  op$type <- type # Identifying the target type for prediction function
+  if (intercept) {
+    op$names <- c("Intercept", colnames(X))
+  } else {
+    op$names <- colnames(X)
+  }
+  return(op)
+}
+
+```
+
+
+Returns:
+A list containing:
+
+model: The fitted glmnet model object (returned only when baggingformodels is FALSE).
+regularization_param: The lambda value used for regularization, determined either through input or by cross-validation.
+coefs: The coefficients of the fitted model at the optimal lambda.
+preds: Predictions made by the model on the dataset.
+type: Indicates the type of model fitted ('gaussian' or 'binomial').
+names: Names of the predictors included in the model, including "Intercept" if it was included.
+
+
+
+```{r}
+# Example usage with the Boston dataset
+library(MASS)
+data(Boston)
+X <- Boston[, c("lstat", "rm")]
+y <- Boston$medv
+result <- lasso(y = y, X = X, type = "gaussian", baggingformodels = FALSE)
+print(result)
+
+
+```
+Detailed Explanation
+Library and Data Loading:
+
+
+library(MASS): Loads the MASS package, which contains statistical tools and the Boston dataset.
+data(Boston): Loads the Boston dataset into the R environment.
+Data Preparation:
+X <- Boston[, c("lstat", "rm")]: Selects the predictors for the model. lstat represents the percentage of lower status of the population, and rm is the average number of rooms per dwelling. These predictors are chosen because they are commonly used in regression analyses focusing on housing data.
+#y <- Boston$medv: Specifies the response variable, which is the median value of owner-occupied homes in $1000s.
+Model Fitting:
+result <- lasso(y = y, X = X, type = "gaussian", baggingformodels = FALSE): Fits a Lasso model using the defined predictors and response. The type is set to "gaussian" for regression. baggingformodels is set to FALSE, indicating that no bootstrap aggregation is used in this example. If TRUE, it would enhance model robustness by averaging results from multiple bootstrap samples.
+Output:
+The print(result) statement displays the output from the lasso function. Depending on how your lasso function is implemented, this output might include the fitted model's coefficients, the regularization parameter used (lambda), and the model's predictions.
+Expected Output
+The output should detail the model coefficients that indicate the impact of each predictor (lstat and rm) on the response (medv). Additionally, any diagnostics or model performance metrics calculated within the lasso function (such as R-squared or mean squared error) might also be displayed, providing insights into the model's effectiveness.

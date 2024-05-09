@@ -1,0 +1,131 @@
+---
+title: "Elastic Net Model"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Elastic Net Model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The elasticnet function constructs a predictive model using elastic net regularization, which combines both L1 (lasso) and L2 (ridge) penalties. This approach helps manage multicollinearity among predictors, reduce overfitting, and enhance model sparsity. It is particularly effective when the number of predictors exceeds the number of observations. The function supports optional bagging (bootstrap aggregation) to further improve model stability and accuracy by averaging results across multiple bootstrap samples.
+```{r setup}
+library(SimpleEnsembleGroup20)
+```
+Arguments:
+y: A vector containing the response variable. It should be continuous for regression tasks or binary (0 and 1) for classification tasks.
+X: A matrix or data frame of predictor variables. Variables can be numeric or categorical, but should be properly formatted and encoded before being passed to this function.
+regularization_param: Optional; a numeric value specifying the strength of the regularization. If NULL, the function will determine an optimal value using cross-validation.
+alpha: A numeric value between 0 and 1 that balances the lasso (L1) and ridge (L2) penalties. An alpha of 1 represents a full lasso model, while 0 represents a full ridge model.
+intercept: A logical value indicating whether to include an intercept term in the model. Defaults to TRUE.
+type: Specifies the model type: 'binomial' for classification or 'gaussian' for regression.
+baggingformodel: A logical indicator whether to apply bagging. If TRUE, the model will perform bootstrap aggregation to create multiple samples, fit models to these samples, and average the results.
+R: The number of bootstrap replicates to use if bagging is enabled. Only required and used if baggingformodel is TRUE.
+```{r }
+#' @title Fit Elastic Net Model
+#'
+#' @description Constructs a regularized predictive model using the glmnet package, balancing model
+#' complexity and predictive prowess through a combination of L1 (lasso) and L2 (ridge) regularization penalties.
+#' This technique addresses multicollinearity concerns, mitigates overfitting, and encourages sparsity in coefficients,
+#' proving advantageous when the number of predictors outstrips the number of observations. Optionally, a
+#' bagging strategy (bootstrap aggregation) can be employed to bolster model robustness and predictive
+#' performance by amalgamating results from multiple bootstrap samples.
+#'
+#' @param y Response vector, continuous for regression or binary for classification.
+#' @param X Matrix of predictor variables, numeric or categorical.
+#' @param regularization_param Regularization strength parameter for elastic net penalty; if NULL, determined via cross-validation.
+#' @param alpha Mixing parameter for elastic net penalty, with values between 0 and 1.
+#' A value of 1 corresponds to lasso penalty, while 0 corresponds to ridge penalty.
+#' @param intercept Logical indicating whether to include an intercept term in the model.
+#' @param type A character string specifying the target type: 'binomial' for classification or 'gaussian' for regression.
+#' @param baggingformodel Logical indicating whether to employ bootstrap aggregation (bagging).
+#' @param R Integer specifying the number of bootstrap samples for bagging if enabled.
+#' @return A list containing the regularized predictive model details, or if baggingformodel is enabled, an aggregated
+#' result from multiple bootstrap samples, including the model, regularization parameter value, coefficients,
+#' and predicted values (continuous for gaussian, probabilities for binomial).
+#' @importFrom glmnet glmnet cv.glmnet
+#' @export
+#' @examples
+#' # Example for Gaussian Model (Regression)
+#' data(Boston)
+#' X <- Boston[, c("lstat", "rm")]
+#' y <- Boston$medv
+#' result <- elasticnet(y = y, X = X, type = "gaussian", alpha = 0.5, baggingformodel = FALSE)
+#' print(result)
+#'
+#' # Example for Binomial Model (Classification)
+#' data(PimaIndiansDiabetes)
+#' X <- PimaIndiansDiabetes[, c("glucose", "BMI")]
+#' y <- PimaIndiansDiabetes$diabetes
+#' result <- elasticnet(y = y, X = X, type = "binomial", alpha = 0.5, baggingformodel = TRUE, R = 50)
+#' print(result)
+
+elasticnet <- function(y, X, regularization_param = NULL, alpha = 0.5, intercept = TRUE, baggingformodel = FALSE, type = "gaussian", R = 100) {
+  validate_data(y, X)
+
+  if (!(is.numeric(alpha) && alpha >= 0 && alpha <= 1)) {
+    stop("The 'alpha' parameter should be a numeric value within the range [0, 1]")
+  }
+
+  if (!type %in% c("binomial", "gaussian")) {
+    stop("'type' must be either 'binomial' or 'gaussian'")
+  }
+
+  family_spec <- type
+
+  if (is.null(regularization_param)) {
+    res <- cv.glmnet(x = as.matrix(X), y = y, alpha = alpha, family = family_spec, intercept = intercept)
+    regularization_param <- res$lambda.min
+  }
+  op <- if (baggingformodel) {
+    perform_bagging(y, X, function(y_sample, X_sample) {
+      fit <- glmnet(x = as.matrix(X_sample), y = y_sample, alpha = alpha, lambda = regularization_param, family = family_spec, intercept = intercept)
+      list(coefs = coef(fit), preds = predict(fit, newx = as.matrix(X_sample), type = "response"))
+    }, R)
+  } else {
+    fit <- glmnet(x = as.matrix(X), y = y, alpha = alpha, lambda = regularization_param, family = family_spec, intercept = intercept)
+
+    preds <- predict(fit, newx = as.matrix(X), type = "response", s = "lambda.min")
+    coefs <- coef(fit, s = "lambda.min") # Include intercept if intercept is TRUE
+    list(model = fit, regularization_param = regularization_param, coefs = coefs, preds = preds)
+  }
+  op$type <- type # Identifying the target type for prediction function
+  if (intercept) {
+    op$names <- c("Intercept", colnames(X))
+  } else {
+    op$names <- colnames(X)
+  }
+  return(op)
+}
+
+```
+The function returns a list containing the following components:
+
+model: The fitted glmnet model object (only returned when baggingformodel is FALSE).
+regularization_param: The lambda value used for regularization.
+coefs: The coefficients from the model at the best lambda.
+preds: Predictions made by the model on the dataset.
+type: The type of model fitted ('gaussian' or 'binomial').
+names: Names of the predictors included in the model, including "Intercept" if it was added.
+```{r example}
+# Example usage with the Boston dataset
+library(MASS)
+data(Boston)
+X <- Boston[, c("lstat", "rm")]
+y <- Boston$medv
+result <- elasticnet(y = y, X = X, type = "gaussian", baggingformodel = FALSE)
+print(result)
+```
+
+
+
+y: The vector of responses (housing prices).
+X: The matrix of predictors (lstat and rm).
+type: Specified as "gaussian" indicating that the response variable is continuous, suitable for regression analysis.
+baggingformodel: Set to FALSE, indicating that bagging (bootstrap aggregation) is not used in this instance. If set to TRUE, the model would perform multiple samplings and aggregations to potentially enhance performance and robustness.
